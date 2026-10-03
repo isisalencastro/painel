@@ -15,13 +15,13 @@
 <link rel="manifest" href="manifest.webmanifest">
 <link rel="apple-touch-icon" href="icones/apple-touch-icon.png">
 <link rel="icon" type="image/png" href="icones/icon-192.png">
-<link rel="stylesheet" href="style.css?v=202610030730">
+<link rel="stylesheet" href="style.css?v=202610031400">
 </head>
 <body>
 
 <section id="entrar" class="entrar" hidden>
   <div class="entrar-caixa">
-    <p class="etiqueta">Painel pessoal</p>
+    <div class="entrar-marca" aria-hidden="true">✓</div>
     <h1>Meu app</h1>
     <p class="secundario">Entre para ver o dia e marcar o que já fez.</p>
     <form id="form-entrar">
@@ -36,7 +36,7 @@
       <p id="entrar-erro" class="erro" role="alert"></p>
     </form>
     <p class="rodape-texto">A mesma conta do app. A lista é a sua página Casa, no Notion.</p>
-    <p class="versao">versão 202610030700</p>
+    <p class="versao">versão 202610031400</p>
   </div>
 </section>
 
@@ -67,25 +67,26 @@
   </section>
 
   <section class="cartao adp" id="cartao-adp" hidden>
-    <p class="etiqueta">Contagem regressiva</p>
-    <div class="adp-linha">
+    <div class="adp-numero">
       <strong id="adp-dias">—</strong>
-      <div>
-        <h2 id="adp-titulo">Avaliação presencial</h2>
-        <p id="adp-detalhe"></p>
-      </div>
+      <span id="adp-unidade">dias</span>
+    </div>
+    <div class="adp-texto">
+      <p class="etiqueta">Contagem regressiva</p>
+      <h2 id="adp-titulo">Avaliação presencial</h2>
+      <p id="adp-detalhe"></p>
     </div>
   </section>
 
   <div id="grupos"></div>
 
   <section class="cartao" id="cartao-proximos" hidden>
-    <p class="etiqueta">Próximos dias</p>
+    <h2 class="titulo-secao">Próximos dias</h2>
     <ul class="linha-tempo" id="linha-tempo"></ul>
   </section>
 
   <footer class="rodape">
-    <a class="botao" href="https://t.me/isisalencastro_bot" rel="noopener">Abrir conversa no Telegram</a>
+    <a class="botao botao-leve" href="https://t.me/isisalencastro_bot" rel="noopener">Abrir conversa no Telegram</a>
     <p class="rodape-texto" id="atualizado" aria-live="polite"></p>
     <p class="versao">versão 202610030700</p>
     <button id="sair" class="link-sair" type="button">Sair desta conta</button>
@@ -93,6 +94,6 @@
 </main>
 
 <div class="aviso" id="aviso" role="status" hidden></div>
-<script src="app.js?v=202610030730"></script>
+<script src="app.js?v=202610031400"></script>
 </body>
 </html>
