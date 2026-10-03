@@ -8,12 +8,14 @@
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-title" content="Meu dia">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-<meta name="theme-color" content="#0b0b0f">
+<meta name="theme-color" content="#0b0b0f" media="(prefers-color-scheme: dark)">
+<meta name="theme-color" content="#f4f5f8" media="(prefers-color-scheme: light)">
+<meta name="color-scheme" content="dark light">
 <title>Meu dia</title>
 <link rel="manifest" href="manifest.webmanifest">
 <link rel="apple-touch-icon" href="icones/apple-touch-icon.png">
 <link rel="icon" type="image/png" href="icones/icon-192.png">
-<link rel="stylesheet" href="style.css?v=202610030622">
+<link rel="stylesheet" href="style.css?v=202610030700">
 </head>
 <body>
 
@@ -34,7 +36,7 @@
       <p id="entrar-erro" class="erro" role="alert"></p>
     </form>
     <p class="rodape-texto">A mesma conta do app. A lista é a sua página Casa, no Notion.</p>
-    <p class="versao">versão 202610030622</p>
+    <p class="versao">versão 202610030700</p>
   </div>
 </section>
 
@@ -44,7 +46,7 @@
       <p class="saudacao" id="saudacao">Oi</p>
       <h1 id="data-hoje">carregando…</h1>
     </div>
-    <button id="atualizar" class="botao-icone" type="button" aria-label="Atualizar">↻</button>
+    <button id="atualizar" class="botao-icone" type="button" aria-label="Atualizar a lista"><span aria-hidden="true">↻</span></button>
   </header>
 
   <section class="cartao destaque">
@@ -60,7 +62,7 @@
     </div>
     <div class="destaque-texto">
       <h2>Meu dia</h2>
-      <p id="resumo-texto">Buscando as tarefas de hoje…</p>
+      <p id="resumo-texto" aria-live="polite">Buscando as tarefas de hoje…</p>
     </div>
   </section>
 
@@ -83,14 +85,14 @@
   </section>
 
   <footer class="rodape">
-    <a class="botao" href="https://t.me/isisalencastro_bot">Abrir conversa no Telegram</a>
-    <p class="rodape-texto" id="atualizado"></p>
-    <p class="versao">versão 202610030622</p>
+    <a class="botao" href="https://t.me/isisalencastro_bot" rel="noopener">Abrir conversa no Telegram</a>
+    <p class="rodape-texto" id="atualizado" aria-live="polite"></p>
+    <p class="versao">versão 202610030700</p>
     <button id="sair" class="link-sair" type="button">Sair desta conta</button>
   </footer>
 </main>
 
-<div class="aviso" id="aviso" hidden></div>
-<script src="app.js?v=202610030622"></script>
+<div class="aviso" id="aviso" role="status" hidden></div>
+<script src="app.js?v=202610030700"></script>
 </body>
 </html>

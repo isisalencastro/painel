@@ -8,7 +8,43 @@
   --azul: #185cb6;
   --azul-claro: #4d92ea;
   --verde: #39c07a;
+  --anel-fundo: #23232f;
+  --marca-borda: #5c5c78;
+  --campo: #101018;
+  --texto-suave: #c6cddb;
+  --filho: #b9bfcb;
+  --adp-de: #12233c;
+  --adp-borda: #24354f;
+  --aviso-fundo: #f4f5f7;
+  --aviso-texto: #0b0b0f;
+  --erro: #ff8f8f;
   --raio: 18px;
+  color-scheme: dark;
+}
+
+/* Modo claro automatico, pelo tema do celular */
+@media (prefers-color-scheme: light) {
+  :root {
+    --fundo: #f4f5f8;
+    --cartao: #ffffff;
+    --cartao-alto: #eef1f6;
+    --borda: #e1e4ec;
+    --texto: #12141a;
+    --secundario: #5f6675;
+    --azul-claro: #185cb6;
+    --verde: #1f9d5c;
+    --anel-fundo: #e6e9f0;
+    --marca-borda: #a3a9b8;
+    --campo: #f7f8fb;
+    --texto-suave: #3f4654;
+    --filho: #4a5160;
+    --adp-de: #e3edfa;
+    --adp-borda: #c9daf2;
+    --aviso-fundo: #12141a;
+    --aviso-texto: #ffffff;
+    --erro: #c62828;
+    color-scheme: light;
+  }
 }
 
 * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
@@ -93,7 +129,7 @@ html, body {
 .destaque { display: flex; align-items: center; gap: 16px; }
 .anel { position: relative; width: 96px; height: 96px; flex: 0 0 auto; }
 .anel svg { width: 100%; height: 100%; transform: rotate(-90deg); }
-.anel-fundo { fill: none; stroke: #23232f; stroke-width: 9; }
+.anel-fundo { fill: none; stroke: var(--anel-fundo); stroke-width: 9; }
 .anel-valor {
   fill: none;
   stroke: var(--azul-claro);
@@ -117,11 +153,11 @@ html, body {
 .destaque-texto p { margin: 0; color: var(--secundario); font-size: 0.88rem; }
 
 /* ADP */
-.adp { background: linear-gradient(150deg, #12233c, #14141b 70%); border-color: #24354f; }
+.adp { background: linear-gradient(150deg, var(--adp-de), var(--cartao) 70%); border-color: var(--adp-borda); }
 .adp-linha { display: flex; align-items: center; gap: 14px; }
 .adp-linha strong { font-size: 1.9rem; line-height: 1; color: var(--azul-claro); white-space: nowrap; }
 .adp-linha h2 { font-size: 1rem; }
-.adp-linha p { margin: 4px 0 0; color: #c6cddb; font-size: 0.84rem; }
+.adp-linha p { margin: 4px 0 0; color: var(--texto-suave); font-size: 0.84rem; }
 
 /* grupos de tarefas */
 .grupo { margin-bottom: 12px; }
@@ -150,7 +186,7 @@ html, body {
   width: 22px;
   height: 22px;
   border-radius: 50%;
-  border: 1.8px solid #5c5c78;
+  border: 1.8px solid var(--marca-borda);
   flex: 0 0 auto;
   margin-top: 1px;
   display: flex;
@@ -163,7 +199,7 @@ html, body {
 .tarefa.feita .texto { color: var(--secundario); text-decoration: line-through; }
 .texto { flex: 1 1 auto; }
 .filhos { margin: 6px 0 0 34px; display: flex; flex-direction: column; gap: 5px; }
-.filho { display: flex; align-items: center; gap: 9px; font-size: 0.88rem; color: #b9bfcb; }
+.filho { display: flex; align-items: center; gap: 9px; font-size: 0.88rem; color: var(--filho); }
 .filho .marca { width: 16px; height: 16px; font-size: 0.6rem; border-width: 1.6px; }
 .filho.feito span { text-decoration: line-through; }
 
@@ -207,8 +243,8 @@ html, body {
   left: 50%;
   bottom: calc(env(safe-area-inset-bottom, 0px) + 26px);
   transform: translateX(-50%);
-  background: #f4f5f7;
-  color: #0b0b0f;
+  background: var(--aviso-fundo);
+  color: var(--aviso-texto);
   padding: 11px 18px;
   border-radius: 999px;
   font-size: 0.85rem;
@@ -220,7 +256,6 @@ html, body {
 }
 .aviso.visivel { opacity: 1; }
 
-.erro { color: #ff9b9b; }
 @media (prefers-reduced-motion: reduce) {
   .anel-valor { transition: none; }
   .botao-icone.girando { animation: none; }
@@ -255,7 +290,7 @@ html, body {
 .entrar-caixa input {
   width: 100%;
   box-sizing: border-box;
-  background: #101018;
+  background: var(--campo);
   border: 1px solid var(--borda);
   border-radius: 12px;
   color: var(--texto);
@@ -278,8 +313,9 @@ html, body {
 .entrar-caixa .botao[disabled] { opacity: 0.6; cursor: default; }
 .entrar-caixa .rodape-texto { margin: 14px 0 0; font-size: 0.76rem; }
 
-.erro { color: #ff8f8f; font-size: 0.84rem; margin: 10px 0 0; min-height: 1.1em; }
-.erro-aviso { border-color: #ff8f8f; }
+.entrar-caixa .erro { font-size: 0.84rem; margin: 10px 0 0; min-height: 1.1em; }
+.erro { color: var(--erro); }
+.aviso.erro-aviso { background: var(--erro); color: #fff; }
 
 .link-sair {
   background: none;
@@ -303,3 +339,80 @@ button.marca {
 }
 button.marca:focus-visible { outline: 2px solid var(--azul); outline-offset: 2px; }
 .tarefa.ocupada { opacity: 0.65; }
+
+/* ---------- melhorias de 03/10/2026 ---------- */
+
+/* marca maior para o dedo, sem mudar o desenho: a area de toque vai a 44px */
+button.marca { position: relative; }
+button.marca::before { content: ""; position: absolute; inset: -11px; }
+.marca-check { line-height: 1; }
+.tarefa { transition: background-color 0.2s ease, opacity 0.2s ease; }
+.tarefa .marca { transition: background-color 0.18s ease, border-color 0.18s ease, transform 0.18s ease; }
+.tarefa.feita .marca { animation: pulso 0.28s ease; }
+@keyframes pulso { 50% { transform: scale(1.18); } }
+.tarefa .texto { display: flex; flex-direction: column; gap: 2px; }
+.tarefa-extra { color: var(--secundario); font-size: 0.74rem; }
+
+.botao-icone:focus-visible,
+.botao:focus-visible,
+.link-sair:focus-visible,
+.grupo-topo:focus-visible { outline: 2px solid var(--azul-claro); outline-offset: 2px; }
+.botao-icone[disabled] { opacity: 0.7; }
+
+/* grupo fechado ganha um sinal discreto */
+.grupo-completo .grupo-conta { color: var(--verde); font-weight: 600; }
+
+/* ficou para tras: recolhido */
+details.grupo > summary { list-style: none; cursor: pointer; border-radius: 10px; }
+details.grupo > summary::-webkit-details-marker { display: none; }
+details.grupo > summary h3::before {
+  content: "›";
+  display: inline-block;
+  margin-right: 8px;
+  color: var(--secundario);
+  transition: transform 0.2s ease;
+}
+details.grupo[open] > summary h3::before { transform: rotate(90deg); }
+.atrasadas .grupo-conta { color: var(--secundario); }
+
+/* proximos dias agrupados */
+.lista-dia { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 4px; }
+.lista-dia li { padding: 0; border: 0; }
+.lista-dia li.feito { color: var(--secundario); text-decoration: line-through; }
+.vazio p { margin: 0; color: var(--secundario); }
+
+/* dia fechado: anel verde e confete */
+.destaque.completo .anel-valor { stroke: var(--verde); }
+.anel { overflow: visible; }
+.confete {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  width: 7px;
+  height: 7px;
+  margin: -3.5px;
+  border-radius: 2px;
+  pointer-events: none;
+  animation: estoura 0.85s cubic-bezier(0.2, 0.7, 0.3, 1) forwards;
+}
+@keyframes estoura {
+  0% { transform: translate(0, 0) scale(0.4); opacity: 1; }
+  100% { transform: translate(var(--x), var(--y)) scale(1) rotate(200deg); opacity: 0; }
+}
+
+/* entrada suave dos blocos */
+#grupos > *, #cartao-proximos, #cartao-adp { animation: entra 0.35s ease both; }
+@keyframes entra { from { opacity: 0; transform: translateY(6px); } }
+
+@media (prefers-reduced-motion: reduce) {
+  .tarefa, .tarefa .marca { transition: none; }
+  .tarefa.feita .marca { animation: none; }
+  #grupos > *, #cartao-proximos, #cartao-adp { animation: none; }
+  details.grupo > summary h3::before { transition: none; }
+}
+
+/* hidden vence qualquer display: sem isso a caixa de entrar ficava em cima do painel */
+[hidden] { display: none !important; }
+button.marca { background: transparent; color: transparent; }
+.tarefa.feita button.marca { background: var(--verde); color: #fff; }
+.versao { color: var(--secundario); font-size: 0.68rem; margin: 8px 0 0; opacity: 0.8; }
