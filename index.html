@@ -1,0 +1,77 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="robots" content="noindex, nofollow">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="Meu dia">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="theme-color" content="#0b0b0f">
+<title>Meu dia</title>
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="apple-touch-icon" href="icones/apple-touch-icon.png">
+<link rel="icon" type="image/png" href="icones/icon-192.png">
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+<main id="app">
+  <header class="topo">
+    <div class="topo-texto">
+      <p class="saudacao" id="saudacao">Oi</p>
+      <h1 id="data-hoje">carregando…</h1>
+    </div>
+    <button id="atualizar" class="botao-icone" type="button" aria-label="Atualizar">↻</button>
+  </header>
+
+  <section class="cartao destaque">
+    <div class="anel">
+      <svg viewBox="0 0 120 120" aria-hidden="true">
+        <circle class="anel-fundo" cx="60" cy="60" r="52"></circle>
+        <circle class="anel-valor" id="anel-valor" cx="60" cy="60" r="52"></circle>
+      </svg>
+      <div class="anel-texto">
+        <strong id="pct">0%</strong>
+        <span id="contagem">0 de 0</span>
+      </div>
+    </div>
+    <div class="destaque-texto">
+      <h2>Meu dia</h2>
+      <p id="resumo-texto">Buscando as tarefas de hoje…</p>
+    </div>
+  </section>
+
+  <section class="cartao adp" id="cartao-adp" hidden>
+    <p class="etiqueta">Contagem regressiva</p>
+    <div class="adp-linha">
+      <strong id="adp-dias">—</strong>
+      <div>
+        <h2 id="adp-titulo">ADP</h2>
+        <p id="adp-detalhe"></p>
+      </div>
+    </div>
+  </section>
+
+  <div id="grupos"></div>
+
+  <section class="cartao" id="cartao-estudos" hidden>
+    <p class="etiqueta">Estudos de hoje</p>
+    <h2 id="estudos-titulo">—</h2>
+    <p id="estudos-proximo" class="secundario"></p>
+  </section>
+
+  <section class="cartao" id="cartao-proximos" hidden>
+    <p class="etiqueta">Próximos dias</p>
+    <ul class="linha-tempo" id="linha-tempo"></ul>
+  </section>
+
+  <footer class="rodape">
+    <a class="botao" href="https://t.me/isisalencastro_bot">Abrir conversa no Telegram</a>
+    <p class="rodape-texto" id="atualizado"></p>
+  </footer>
+</main>
+<div class="aviso" id="aviso" hidden></div>
+<script src="app.js"></script>
+</body>
+</html>
