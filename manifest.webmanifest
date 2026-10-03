@@ -1,6 +1,6 @@
 {
-  "name": "Meu dia",
-  "short_name": "Meu dia",
+  "name": "Meu app",
+  "short_name": "Meu app",
   "description": "Tarefas do dia, cronograma e estudos, atualizados pelo agente pessoal.",
   "start_url": "./index.html",
   "scope": "./",
