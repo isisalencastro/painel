@@ -4,6 +4,7 @@ const CFG = {
   url: "https://xpkycwxzvhtaylwferiu.supabase.co",
   chave: "sb_publishable_SDGO156OgN9m5HrqcnLeAQ_fcnYctqU",
 };
+const VERSAO = "202610030622";
 const CHAVE_SESSAO = "painel.sessao.v1";
 const R = 52;
 const VOLTA = 2 * Math.PI * R;
@@ -312,7 +313,7 @@ async function carregar() {
       due_date: l.due_date, feito: l.status === "concluida",
     })).filter((t) => t.due_date);
     render(ultimas);
-    $("#atualizado").textContent = "Atualizado às " +
+    $("#atualizado").textContent = "v" + VERSAO + " · atualizado às " +
       new Date().toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit" });
   } catch (err) {
     if (sessao()) {
@@ -352,3 +353,5 @@ document.addEventListener("visibilitychange", () => {
   if (document.visibilityState === "visible" && sessao()) carregar();
 });
 carregar();
+
+window.__versao = VERSAO;
