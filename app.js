@@ -4,7 +4,7 @@ const CFG = {
   url: "https://xpkycwxzvhtaylwferiu.supabase.co",
   chave: "sb_publishable_SDGO156OgN9m5HrqcnLeAQ_fcnYctqU",
 };
-const VERSAO = "202610030700";
+const VERSAO = "202610030730";
 const CHAVE_SESSAO = "painel.sessao.v1";
 const CHAVE_LISTA = "painel.lista.v1";      // ultima lista boa, para abrir na hora e sem internet
 const DIAS_PARA_TRAS = 7;                   // pendencias atrasadas que ainda aparecem
