@@ -16,3 +16,9 @@ pelo agente pessoal; o painel lê de lá com login e grava a marcação de feito
 Trocar a versão em `VERSAO` (no `app.js`) e nos `?v=` do CSS e do JS em `index.html`, todos com o mesmo número.
 O texto "versão" na tela é preenchido pelo JS. O service worker usa a mesma versão para trocar o cache, então o
 celular não mistura tela nova com script velho.
+
+## Sobre o `dados.json`
+
+O painel lia um `dados.json` gerado pelo agente pessoal (`/opt/data/profiles/pessoal/scripts/painel_dados.py`).
+Desde a versão com login ele lê do banco, e o arquivo saiu do repositório em 03/10/2026 porque deixava a rotina
+pública. Se ele voltar a aparecer, é esse script publicando: desligar a rotina dele no agente pessoal.
