@@ -22,12 +22,22 @@ const criar = (tag, cls, html) => {
 
 /* ------------------------------ sessao ------------------------------ */
 
-function sessao() {
+let sessaoViva = null;   // copia em memoria: vale mesmo se o navegador barrar o armazenamento
+
+function lerGuardada() {
   try { return JSON.parse(localStorage.getItem(CHAVE_SESSAO) || "null"); }
   catch (e) { return null; }
 }
-function guardarSessao(s) { localStorage.setItem(CHAVE_SESSAO, JSON.stringify(s)); }
-function sair() { localStorage.removeItem(CHAVE_SESSAO); mostrarEntrada(); }
+function sessao() { return sessaoViva || lerGuardada(); }
+function guardarSessao(s) {
+  sessaoViva = s;
+  try { localStorage.setItem(CHAVE_SESSAO, JSON.stringify(s)); } catch (e) { /* segue em memoria */ }
+}
+function sair() {
+  sessaoViva = null;
+  try { localStorage.removeItem(CHAVE_SESSAO); } catch (e) {}
+  mostrarEntrada();
+}
 
 async function entrar(email, senha) {
   const r = await fetch(CFG.url + "/auth/v1/token?grant_type=password", {
@@ -307,7 +317,8 @@ async function carregar() {
   } catch (err) {
     if (sessao()) {
       $("#resumo-texto").innerHTML = '<span class="erro">Não consegui carregar agora.</span>';
-      $("#atualizado").textContent = "Toque no ↻ para tentar de novo.";
+      $("#atualizado").textContent = "Motivo: " + (err && err.message ? err.message : "desconhecido") +
+        ". Toque no ↻ para tentar de novo.";
     }
   } finally {
     setTimeout(() => btn.classList.remove("girando"), 400);
