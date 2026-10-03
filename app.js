@@ -37,7 +37,16 @@ async function entrar(email, senha) {
   });
   if (!r.ok) {
     const e = await r.json().catch(() => ({}));
-    throw new Error(e.error_description || e.msg || "Não consegui entrar. Confira e-mail e senha.");
+    const bruto = String(e.error_description || e.msg || "").toLowerCase();
+    let msg = "Não consegui entrar. Confira e-mail e senha.";
+    if (bruto.includes("invalid login")) {
+      msg = "E-mail ou senha não conferem. Veja se a primeira letra não ficou maiúscula e se não sobrou espaço no fim.";
+    } else if (bruto.includes("not confirmed")) {
+      msg = "Esse e-mail ainda não está confirmado no Supabase.";
+    } else if (bruto.includes("rate limit") || bruto.includes("too many")) {
+      msg = "Muitas tentativas seguidas. Espere um minuto e tente de novo.";
+    }
+    throw new Error(msg);
   }
   const s = await r.json();
   guardarSessao({
@@ -315,7 +324,7 @@ $("#form-entrar").addEventListener("submit", async (ev) => {
   bt.disabled = true;
   bt.textContent = "Entrando…";
   try {
-    await entrar($("#entrar-email").value.trim(), $("#entrar-senha").value);
+    await entrar($("#entrar-email").value.trim(), $("#entrar-senha").value.trim());
     $("#entrar-senha").value = "";
     await carregar();
   } catch (e) {
