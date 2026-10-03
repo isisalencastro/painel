@@ -16,6 +16,26 @@
 <link rel="stylesheet" href="style.css">
 </head>
 <body>
+
+<section id="entrar" class="entrar" hidden>
+  <div class="entrar-caixa">
+    <p class="etiqueta">Painel pessoal</p>
+    <h1>Meu dia</h1>
+    <p class="secundario">Entre para ver o dia e marcar o que já fez.</p>
+    <form id="form-entrar">
+      <label for="entrar-email">E-mail</label>
+      <input id="entrar-email" name="email" type="email" inputmode="email"
+             autocomplete="username" autocapitalize="none" spellcheck="false" required>
+      <label for="entrar-senha">Senha</label>
+      <input id="entrar-senha" name="senha" type="password"
+             autocomplete="current-password" required>
+      <button id="botao-entrar" class="botao" type="submit">Entrar</button>
+      <p id="entrar-erro" class="erro" role="alert"></p>
+    </form>
+    <p class="rodape-texto">A mesma conta do app. A lista é a sua página Casa, no Notion.</p>
+  </div>
+</section>
+
 <main id="app">
   <header class="topo">
     <div class="topo-texto">
@@ -47,19 +67,13 @@
     <div class="adp-linha">
       <strong id="adp-dias">—</strong>
       <div>
-        <h2 id="adp-titulo">ADP</h2>
+        <h2 id="adp-titulo">Avaliação presencial</h2>
         <p id="adp-detalhe"></p>
       </div>
     </div>
   </section>
 
   <div id="grupos"></div>
-
-  <section class="cartao" id="cartao-estudos" hidden>
-    <p class="etiqueta">Estudos de hoje</p>
-    <h2 id="estudos-titulo">—</h2>
-    <p id="estudos-proximo" class="secundario"></p>
-  </section>
 
   <section class="cartao" id="cartao-proximos" hidden>
     <p class="etiqueta">Próximos dias</p>
@@ -69,8 +83,10 @@
   <footer class="rodape">
     <a class="botao" href="https://t.me/isisalencastro_bot">Abrir conversa no Telegram</a>
     <p class="rodape-texto" id="atualizado"></p>
+    <button id="sair" class="link-sair" type="button">Sair desta conta</button>
   </footer>
 </main>
+
 <div class="aviso" id="aviso" hidden></div>
 <script src="app.js"></script>
 </body>

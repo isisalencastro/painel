@@ -225,3 +225,81 @@ html, body {
   .anel-valor { transition: none; }
   .botao-icone.girando { animation: none; }
 }
+
+/* ---------- tela de entrada (login) e marcação ---------- */
+.entrar {
+  min-height: 100dvh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 24px 18px calc(24px + env(safe-area-inset-bottom));
+}
+.entrar-caixa {
+  width: 100%;
+  max-width: 380px;
+  background: var(--cartao);
+  border: 1px solid var(--borda);
+  border-radius: var(--raio);
+  padding: 22px 20px 18px;
+}
+.entrar-caixa h1 { margin: 2px 0 6px; font-size: 1.5rem; }
+.entrar-caixa .secundario { margin: 0 0 16px; }
+.entrar-caixa label {
+  display: block;
+  font-size: 0.78rem;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--secundario);
+  margin: 12px 0 5px;
+}
+.entrar-caixa input {
+  width: 100%;
+  box-sizing: border-box;
+  background: #101018;
+  border: 1px solid var(--borda);
+  border-radius: 12px;
+  color: var(--texto);
+  font: inherit;
+  padding: 12px 13px;
+}
+.entrar-caixa input:focus,
+.entrar-caixa input:focus-visible {
+  outline: 2px solid var(--azul);
+  outline-offset: 1px;
+}
+.entrar-caixa .botao {
+  width: 100%;
+  border: 0;
+  font: inherit;
+  font-weight: 600;
+  margin-top: 16px;
+  cursor: pointer;
+}
+.entrar-caixa .botao[disabled] { opacity: 0.6; cursor: default; }
+.entrar-caixa .rodape-texto { margin: 14px 0 0; font-size: 0.76rem; }
+
+.erro { color: #ff8f8f; font-size: 0.84rem; margin: 10px 0 0; min-height: 1.1em; }
+.erro-aviso { border-color: #ff8f8f; }
+
+.link-sair {
+  background: none;
+  border: 0;
+  color: var(--secundario);
+  font: inherit;
+  font-size: 0.82rem;
+  text-decoration: underline;
+  padding: 6px 0 0;
+  cursor: pointer;
+}
+
+button.marca {
+  font: inherit;
+  padding: 0;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.72rem;
+}
+button.marca:focus-visible { outline: 2px solid var(--azul); outline-offset: 2px; }
+.tarefa.ocupada { opacity: 0.65; }
