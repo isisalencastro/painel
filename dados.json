@@ -1,0 +1,167 @@
+{
+ "gerado_em": "03/10/2026 às 07:16",
+ "gerado_iso": "2026-10-03T07:16:13-03:00",
+ "hoje": {
+  "iso": "2026-10-03",
+  "data": "03/10/2026",
+  "dia_semana": "sábado"
+ },
+ "resumo": {
+  "total": 16,
+  "feitos": 0,
+  "percentual": 0
+ },
+ "grupos": [
+  {
+   "chave": "diarias",
+   "rotulo": "Diárias da casa",
+   "icone": "🏠",
+   "itens": [
+    {
+     "texto": "Varrer/Aspirar a casa",
+     "feito": false,
+     "filhos": []
+    },
+    {
+     "texto": "Lavar louça",
+     "feito": false,
+     "filhos": []
+    },
+    {
+     "texto": "Limpar e alimentar pets",
+     "feito": false,
+     "filhos": [
+      {
+       "texto": "Ratas",
+       "feito": false
+      },
+      {
+       "texto": "Cachorros",
+       "feito": false
+      }
+     ]
+    },
+    {
+     "texto": "Organizar cômodos",
+     "feito": false,
+     "filhos": []
+    }
+   ]
+  },
+  {
+   "chave": "cuidados",
+   "rotulo": "Cuidados pessoais",
+   "icone": "🫧",
+   "itens": [
+    {
+     "texto": "Tomar banho",
+     "feito": false,
+     "filhos": []
+    },
+    {
+     "texto": "Skincare noturno",
+     "feito": false,
+     "filhos": []
+    },
+    {
+     "texto": "Escovar os dentes (manhã e noite)",
+     "feito": false,
+     "filhos": []
+    }
+   ]
+  },
+  {
+   "chave": "videos",
+   "rotulo": "Vídeos da semana",
+   "icone": "🎬",
+   "itens": [
+    {
+     "texto": "Gravar os 3 vídeos da semana",
+     "feito": false,
+     "filhos": []
+    },
+    {
+     "texto": "Editar e programar as postagens",
+     "feito": false,
+     "filhos": []
+    }
+   ]
+  },
+  {
+   "chave": "semanais",
+   "rotulo": "Semanais",
+   "icone": "📅",
+   "itens": [
+    {
+     "texto": "Lavar roupas",
+     "feito": false,
+     "filhos": []
+    },
+    {
+     "texto": "Lavar potes dos cachorros",
+     "feito": false,
+     "filhos": []
+    },
+    {
+     "texto": "Lavar roupas de cama",
+     "feito": false,
+     "filhos": []
+    },
+    {
+     "texto": "Revisar semana e limpar o que estiver pendente",
+     "feito": false,
+     "filhos": []
+    },
+    {
+     "texto": "Passar pano na casa",
+     "feito": false,
+     "filhos": []
+    }
+   ]
+  }
+ ],
+ "proximos": [
+  {
+   "data": "05/10",
+   "dia_semana": "segunda",
+   "faltam": 2,
+   "texto": "Preparação ADP (2h): conhecer a ADP e montar a sua história",
+   "feito": false
+  },
+  {
+   "data": "06/10",
+   "dia_semana": "terça",
+   "faltam": 3,
+   "texto": "Preparação ADP (2h): as perguntas da entrevista e o currículo falado",
+   "feito": false
+  },
+  {
+   "data": "07/10",
+   "dia_semana": "quarta",
+   "faltam": 4,
+   "texto": "Preparação ADP (2h): dinâmica, inglês e logística da véspera",
+   "feito": false
+  },
+  {
+   "data": "08/10",
+   "dia_semana": "quinta",
+   "faltam": 5,
+   "texto": "Dia de avaliação presencial da ADP: 8h30, Av. Soledade 550, Auditório da Cobertura, POA. Levar documento de identificação. Dia inteiro reservado",
+   "feito": false
+  }
+ ],
+ "adp": {
+  "data": "08/10",
+  "dia_semana": "quinta",
+  "faltam": 5,
+  "texto": "Dia de avaliação presencial da ADP: 8h30, Av. Soledade 550, Auditório da Cobertura, POA. Levar documento de identificação. Dia inteiro reservado",
+  "feito": false
+ },
+ "estudos": {
+  "hoje": null,
+  "proximo": {
+   "data": "05/10",
+   "texto": "Preparação ADP (2h): conhecer a ADP e montar a sua história"
+  }
+ }
+}
