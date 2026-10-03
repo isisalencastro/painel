@@ -4,7 +4,7 @@ const CFG = {
   url: "https://xpkycwxzvhtaylwferiu.supabase.co",
   chave: "sb_publishable_SDGO156OgN9m5HrqcnLeAQ_fcnYctqU",
 };
-const VERSAO = "202610030730";
+const VERSAO = "202610031400";
 const CHAVE_SESSAO = "painel.sessao.v1";
 const CHAVE_LISTA = "painel.lista.v1";      // ultima lista boa, para abrir na hora e sem internet
 const DIAS_PARA_TRAS = 7;                   // pendencias atrasadas que ainda aparecem
@@ -16,6 +16,11 @@ const VOLTA = 2 * Math.PI * R;
 // ordem em que os blocos aparecem na tela
 const ORDEM = ["Diárias da casa", "Cuidados pessoais", "Semanais", "Mensais",
   "Vídeos da semana", "Estudos", "Conteúdo do dia"];
+// cor de cada bloco na tela (o tom fica no style.css); bloco novo cai no cinza
+const CORES = {
+  "Diárias da casa": "azul", "Cuidados pessoais": "rosa", "Semanais": "verde", "Mensais": "ambar",
+  "Vídeos da semana": "coral", "Estudos": "violeta", "Conteúdo do dia": "laranja",
+};
 
 const $ = (s) => document.querySelector(s);
 // Texto vindo do banco entra sempre como texto, nunca como HTML.
@@ -244,11 +249,20 @@ function linhaTarefa(item, extra) {
 function blocoDe(nome, itens, opcoes) {
   const o = opcoes || {};
   const bloco = criar(o.recolhivel ? "details" : "section", "grupo" + (o.classe ? " " + o.classe : ""));
+  bloco.dataset.cor = CORES[nome] || "cinza";
   const topo = criar(o.recolhivel ? "summary" : "div", "grupo-topo");
   topo.appendChild(criar("h3", null, nome));
+  if (!o.recolhivel) topo.appendChild(criar("span", "grupo-barra")).appendChild(criar("i"));
   topo.appendChild(criar("span", "grupo-conta"));
   bloco.appendChild(topo);
-  for (const it of itens) bloco.appendChild(linhaTarefa(it, o.extra ? o.extra(it) : null));
+  const lista = criar("div", "grupo-lista");
+  for (const it of itens) {
+    const linha = linhaTarefa(it, o.extra ? o.extra(it) : null);
+    // no "ficou para tras" cada tarefa leva a cor do bloco de origem
+    if (o.recolhivel) linha.style.setProperty("--cor", "var(--cor-" + (CORES[it.bloco] || "cinza") + ")");
+    lista.appendChild(linha);
+  }
+  bloco.appendChild(lista);
   return bloco;
 }
 
@@ -284,6 +298,8 @@ function atualizarResumo() {
     const f = g.querySelectorAll(".tarefa.feita").length;
     const conta = g.querySelector(".grupo-conta");
     if (conta) conta.textContent = f + " de " + linhas;
+    const barra = g.querySelector(".grupo-barra i");
+    if (barra) barra.style.width = (linhas ? Math.round((f / linhas) * 100) : 0) + "%";
     g.classList.toggle("grupo-completo", linhas > 0 && f === linhas);
   }
   const atras = document.querySelector(".atrasadas .grupo-conta");
@@ -326,8 +342,11 @@ function render(dados) {
   if (prova) {
     const falta = diasEntre(hojeISO, prova.due_date);
     cartaoAdp.hidden = false;
-    $("#adp-dias").textContent = falta <= 0 ? "hoje" : (falta === 1 ? "1 dia" : falta + " dias");
-    $("#adp-detalhe").textContent = prova.titulo + " · " + diaSemana(prova.due_date) + ", " + bonita(prova.due_date);
+    $("#adp-dias").textContent = falta <= 0 ? "hoje" : String(falta);
+    $("#adp-unidade").textContent = falta <= 0 ? "" : (falta === 1 ? "dia" : "dias");
+    $("#adp-dias").parentElement.classList.toggle("so-texto", falta <= 0);
+    $("#adp-titulo").textContent = prova.titulo;
+    $("#adp-detalhe").textContent = diaSemana(prova.due_date) + ", " + bonita(prova.due_date);
   } else {
     cartaoAdp.hidden = true;
   }
@@ -378,12 +397,15 @@ function render(dados) {
     const falta = diasEntre(hojeISO, dia);
     const li = criar("li");
     const q = criar("div", "quando" + (falta === 1 ? " agora" : ""));
-    q.appendChild(criar("strong", null, quandoFalta(falta)));
-    q.appendChild(criar("span", null, bonita(dia) + " " + diaSemana(dia)));
+    q.appendChild(criar("strong", null, String(deISO(dia).getDate())));
+    q.appendChild(criar("span", null, diaSemana(dia).slice(0, 3)));
     li.appendChild(q);
-    const lista = criar("ul", "texto lista-dia");
+    const corpo = criar("div", "dia-corpo");
+    corpo.appendChild(criar("p", "dia-falta", quandoFalta(falta) + " · " + bonita(dia)));
+    const lista = criar("ul", "lista-dia");
     for (const it of itens) lista.appendChild(criar("li", it.feito ? "feito" : null, it.titulo));
-    li.appendChild(lista);
+    corpo.appendChild(lista);
+    li.appendChild(corpo);
     lt.appendChild(li);
   }
 

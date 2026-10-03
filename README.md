@@ -28,3 +28,9 @@ pública. Se ele voltar a aparecer, é esse script publicando: desligar a rotina
 O app entrou em outra versao, com login e itens vindos do banco: ele nao le mais o
 `dados.json` publico, que foi removido do repositorio de proposito. O gerador antigo
 (`scripts/painel_dados.py`) fica guardado para uso manual, e a rotina `painel-atualizar` esta pausada.
+
+## Bloco novo na lista
+
+Cada bloco (Diárias da casa, Estudos etc.) tem posição em `ORDEM` e cor em `CORES`, os dois no `app.js`. Bloco
+que não estiver lá aparece no fim e em cinza; para dar cor, acrescentar o nome em `CORES` com um dos tons
+definidos no `style.css` (azul, rosa, verde, ambar, coral, violeta, laranja).
