@@ -4,7 +4,8 @@
 const VERSAO = new URL(self.location).searchParams.get("v") || "dev";
 const CACHE = "painel-" + VERSAO;
 const CASCA = ["./", "./index.html", "./style.css?v=" + VERSAO, "./app.js?v=" + VERSAO,
-  "./manifest.webmanifest", "./icones/icon-192.png", "./icones/apple-touch-icon.png"];
+  "./manifest.webmanifest", "./icones/icon-192.png", "./icones/apple-touch-icon.png",
+  "./icones/favicon.svg", "./icones/favicon-32.png"];
 
 self.addEventListener("install", (e) => {
   e.waitUntil(caches.open(CACHE).then((c) => c.addAll(CASCA)).then(() => self.skipWaiting()));
