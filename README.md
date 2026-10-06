@@ -34,3 +34,15 @@ O app entrou em outra versao, com login e itens vindos do banco: ele nao le mais
 Cada bloco (Diárias da casa, Estudos etc.) tem posição em `ORDEM` e cor em `CORES`, os dois no `app.js`. Bloco
 que não estiver lá aparece no fim e em cinza; para dar cor, acrescentar o nome em `CORES` com um dos tons
 definidos no `style.css` (azul, rosa, verde, ambar, coral, violeta, laranja).
+
+## Layout desde 05/10/2026
+
+Lilás com fundo xadrez, barra inferior com cinco botões: Hoje, Agenda, + (nova tarefa), Bem-estar e Ficou para trás.
+
+- **Hoje:** frase do dia (toque troca), humor do dia, faixa da semana (toque ou deslize troca o dia; ponto lilás é dia
+  com tarefa, verde é dia todo feito) e a lista do dia, um cartão por bloco com a conta "feitas/total" ao lado.
+  O olho esconde as feitas.
+- **+:** não grava no banco, porque a lista nasce no Notion e a sincronização do agente pessoal mandaria nela. Copia
+  "Adicionar na Casa: ..." e abre a conversa com o agente.
+- **Humor e "esconder feitas"** ficam só no aparelho (`localStorage`), não no banco.
+- **Busca** e o **sino** (pendências atrasadas) usam o que o app já carregou: 7 dias para trás e 30 para frente.

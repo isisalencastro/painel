@@ -7,17 +7,38 @@
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-title" content="Meu app">
-<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-<meta name="theme-color" content="#0b0b0f" media="(prefers-color-scheme: dark)">
-<meta name="theme-color" content="#f4f5f8" media="(prefers-color-scheme: light)">
-<meta name="color-scheme" content="dark light">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="theme-color" content="#1b1726" media="(prefers-color-scheme: dark)">
+<meta name="theme-color" content="#e6def5" media="(prefers-color-scheme: light)">
+<meta name="color-scheme" content="light dark">
 <title>Meu app</title>
 <link rel="manifest" href="manifest.webmanifest">
 <link rel="apple-touch-icon" href="icones/apple-touch-icon.png">
 <link rel="icon" type="image/png" href="icones/icon-192.png">
-<link rel="stylesheet" href="style.css?v=202610031400">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Nunito:wght@500;600;700;800&display=swap">
+<link rel="stylesheet" href="style.css?v=202610051200">
 </head>
 <body>
+
+<!-- icones desenhados uma vez e reaproveitados com <use> -->
+<svg width="0" height="0" style="position:absolute" aria-hidden="true">
+  <defs>
+    <symbol id="i-menu" viewBox="0 0 24 24"><path d="M4 7h16M4 12h16M4 17h16"/></symbol>
+    <symbol id="i-busca" viewBox="0 0 24 24"><circle cx="11" cy="11" r="6.5"/><path d="m16 16 4 4"/></symbol>
+    <symbol id="i-sino" viewBox="0 0 24 24"><path d="M6 16V11a6 6 0 0 1 12 0v5l1.5 2h-15z"/><path d="M10 20.5a2 2 0 0 0 4 0"/></symbol>
+    <symbol id="i-casa" viewBox="0 0 24 24"><path d="M4 11 12 4l8 7v8.5a.5.5 0 0 1-.5.5H15v-6H9v6H4.5a.5.5 0 0 1-.5-.5z"/></symbol>
+    <symbol id="i-agenda" viewBox="0 0 24 24"><rect x="4" y="5.5" width="16" height="14.5" rx="2.5"/><path d="M8 3.5v4M16 3.5v4M4 10h16"/><path d="M12 17.2s-2.6-1.5-2.6-3.1a1.3 1.3 0 0 1 2.6-.4 1.3 1.3 0 0 1 2.6.4c0 1.6-2.6 3.1-2.6 3.1z"/></symbol>
+    <symbol id="i-coracao" viewBox="0 0 24 24"><path d="M12 20s-7.5-4.6-7.5-10.2A4.2 4.2 0 0 1 12 7.4a4.2 4.2 0 0 1 7.5 2.4C19.5 15.4 12 20 12 20z"/></symbol>
+    <symbol id="i-lista" viewBox="0 0 24 24"><rect x="4" y="4" width="16" height="16" rx="3"/><path d="m8.5 12.3 2.4 2.4 4.8-5"/></symbol>
+    <symbol id="i-mais" viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></symbol>
+    <symbol id="i-olho" viewBox="0 0 24 24"><path d="M2.5 12S6 5.5 12 5.5 21.5 12 21.5 12 18 18.5 12 18.5 2.5 12 2.5 12z"/><circle cx="12" cy="12" r="2.8"/></symbol>
+    <symbol id="i-seta-e" viewBox="0 0 24 24"><path d="m14.5 6-6 6 6 6"/></symbol>
+    <symbol id="i-seta-d" viewBox="0 0 24 24"><path d="m9.5 6 6 6-6 6"/></symbol>
+    <symbol id="i-fechar" viewBox="0 0 24 24"><path d="M6 6l12 12M18 6 6 18"/></symbol>
+  </defs>
+</svg>
 
 <section id="entrar" class="entrar" hidden>
   <div class="entrar-caixa">
@@ -36,64 +57,166 @@
       <p id="entrar-erro" class="erro" role="alert"></p>
     </form>
     <p class="rodape-texto">A mesma conta do app. A lista é a sua página Casa, no Notion.</p>
-    <p class="versao">versão 202610031400</p>
+    <p class="versao">versão</p>
   </div>
 </section>
 
 <main id="app">
   <header class="topo">
+    <button id="abrir-menu" class="botao-icone" type="button" aria-label="Menu"><svg><use href="#i-menu"/></svg></button>
     <div class="topo-texto">
       <p class="saudacao" id="saudacao">Oi</p>
-      <h1 id="data-hoje">carregando…</h1>
+      <p class="topo-data" id="data-hoje"></p>
     </div>
-    <button id="atualizar" class="botao-icone" type="button" aria-label="Atualizar a lista"><span aria-hidden="true">↻</span></button>
+    <button id="abrir-busca" class="botao-icone" type="button" aria-label="Buscar tarefa"><svg><use href="#i-busca"/></svg></button>
+    <button id="sino" class="botao-icone" type="button" aria-label="Pendências"><svg><use href="#i-sino"/></svg><span class="sino-conta" id="sino-conta" hidden></span></button>
   </header>
 
-  <section class="cartao destaque">
-    <div class="anel">
-      <svg viewBox="0 0 120 120" aria-hidden="true">
-        <circle class="anel-fundo" cx="60" cy="60" r="52"></circle>
-        <circle class="anel-valor" id="anel-valor" cx="60" cy="60" r="52"></circle>
-      </svg>
-      <div class="anel-texto">
-        <strong id="pct">0%</strong>
-        <span id="contagem">0 de 0</span>
+  <!-- ===================== HOJE ===================== -->
+  <section class="vista" id="vista-hoje" data-vista="hoje">
+    <section class="cartao afirmacao" id="afirmacao" aria-live="polite">
+      <p class="etiqueta">Frase do dia</p>
+      <p class="afirmacao-texto" id="afirmacao-texto"></p>
+      <div class="pontos" id="afirmacao-pontos" role="group" aria-label="Trocar a frase"></div>
+    </section>
+
+    <button class="humor" id="humor" type="button" aria-haspopup="true">
+      <span class="etiqueta">Humor:</span>
+      <span class="humor-valor" id="humor-valor">toque para escolher</span>
+      <span class="humor-mais" aria-hidden="true">•••</span>
+    </button>
+    <div class="humor-opcoes" id="humor-opcoes" hidden></div>
+
+    <section class="cartao semana" aria-label="Semana">
+      <div class="semana-topo">
+        <h2 id="semana-mes">Mês</h2>
+        <div class="semana-setas">
+          <button class="seta" id="semana-antes" type="button" aria-label="Semana anterior"><svg><use href="#i-seta-e"/></svg></button>
+          <button class="seta" id="semana-hoje" type="button">hoje</button>
+          <button class="seta" id="semana-depois" type="button" aria-label="Próxima semana"><svg><use href="#i-seta-d"/></svg></button>
+        </div>
+      </div>
+      <div class="semana-dias" id="semana-dias" role="tablist"></div>
+    </section>
+
+    <div class="dia-topo">
+      <div>
+        <h2 id="dia-titulo">Hoje</h2>
+        <p id="resumo-texto" class="secundario" aria-live="polite">Buscando as tarefas…</p>
+      </div>
+      <div class="dia-acoes">
+        <div class="anel" aria-hidden="true">
+          <svg viewBox="0 0 120 120">
+            <circle class="anel-fundo" cx="60" cy="60" r="52"></circle>
+            <circle class="anel-valor" id="anel-valor" cx="60" cy="60" r="52"></circle>
+          </svg>
+          <strong id="pct">0%</strong>
+        </div>
+        <button id="esconder-feitas" class="botao-icone redondo" type="button" aria-pressed="false" aria-label="Esconder as feitas"><svg><use href="#i-olho"/></svg></button>
       </div>
     </div>
-    <div class="destaque-texto">
-      <h2>Hoje</h2>
-      <p id="resumo-texto" aria-live="polite">Buscando as tarefas de hoje…</p>
-    </div>
+
+    <div id="grupos" class="linha-dia"></div>
   </section>
 
-  <section class="cartao adp" id="cartao-adp" hidden>
-    <div class="adp-numero">
-      <strong id="adp-dias">—</strong>
-      <span id="adp-unidade">dias</span>
-    </div>
-    <div class="adp-texto">
-      <p class="etiqueta">Contagem regressiva</p>
-      <h2 id="adp-titulo">Avaliação presencial</h2>
-      <p id="adp-detalhe"></p>
-    </div>
+  <!-- ===================== AGENDA ===================== -->
+  <section class="vista" id="vista-agenda" data-vista="agenda" hidden>
+    <h2 class="titulo-vista">Agenda</h2>
+    <section class="cartao adp" id="cartao-adp" hidden>
+      <div class="adp-numero">
+        <strong id="adp-dias">—</strong>
+        <span id="adp-unidade">dias</span>
+      </div>
+      <div class="adp-texto">
+        <p class="etiqueta">Contagem regressiva</p>
+        <h2 id="adp-titulo">Avaliação presencial</h2>
+        <p id="adp-detalhe"></p>
+      </div>
+    </section>
+    <section class="cartao" id="cartao-proximos">
+      <h2 class="titulo-secao">Próximos dias</h2>
+      <ul class="linha-tempo" id="linha-tempo"></ul>
+      <p class="secundario" id="proximos-vazio" hidden>Nada marcado nos próximos 30 dias.</p>
+    </section>
   </section>
 
-  <div id="grupos"></div>
-
-  <section class="cartao" id="cartao-proximos" hidden>
-    <h2 class="titulo-secao">Próximos dias</h2>
-    <ul class="linha-tempo" id="linha-tempo"></ul>
+  <!-- ===================== BEM-ESTAR ===================== -->
+  <section class="vista" id="vista-bem" data-vista="bem" hidden>
+    <h2 class="titulo-vista">Bem-estar</h2>
+    <section class="cartao">
+      <h2 class="titulo-secao">Humor da semana</h2>
+      <div class="humor-semana" id="humor-semana"></div>
+      <p class="secundario">Fica guardado só neste aparelho.</p>
+    </section>
+    <section class="cartao">
+      <h2 class="titulo-secao">Cuidados de hoje</h2>
+      <div id="cuidados"></div>
+    </section>
+    <section class="cartao">
+      <h2 class="titulo-secao">Sete dias</h2>
+      <div class="barras" id="barras" aria-label="Tarefas feitas em cada um dos últimos sete dias"></div>
+    </section>
   </section>
 
-  <footer class="rodape">
-    <a class="botao botao-leve" href="https://t.me/isisalencastro_bot" rel="noopener">Abrir conversa no Telegram</a>
-    <p class="rodape-texto" id="atualizado" aria-live="polite"></p>
-    <p class="versao">versão 202610030700</p>
-    <button id="sair" class="link-sair" type="button">Sair desta conta</button>
-  </footer>
+  <!-- ===================== PENDENCIAS ===================== -->
+  <section class="vista" id="vista-pendentes" data-vista="pendentes" hidden>
+    <h2 class="titulo-vista">Ficou para trás</h2>
+    <p class="secundario" id="pendentes-resumo"></p>
+    <div id="pendentes"></div>
+  </section>
+
+  <!-- ===================== BUSCA ===================== -->
+  <section class="vista" id="vista-busca" data-vista="busca" hidden>
+    <div class="busca-campo">
+      <svg><use href="#i-busca"/></svg>
+      <input id="busca" type="search" placeholder="Buscar nas tarefas" autocomplete="off" enterkeyhint="search">
+    </div>
+    <div id="busca-resultado"></div>
+  </section>
+
+  <p class="rodape-texto" id="atualizado" aria-live="polite"></p>
 </main>
 
+<nav class="barra" id="barra" aria-label="Seções">
+  <button type="button" data-ir="hoje" aria-label="Hoje" aria-current="page"><svg><use href="#i-casa"/></svg></button>
+  <button type="button" data-ir="agenda" aria-label="Agenda"><svg><use href="#i-agenda"/></svg></button>
+  <button type="button" class="barra-mais" id="abrir-nova" aria-label="Nova tarefa"><svg><use href="#i-mais"/></svg></button>
+  <button type="button" data-ir="bem" aria-label="Bem-estar"><svg><use href="#i-coracao"/></svg></button>
+  <button type="button" data-ir="pendentes" aria-label="Ficou para trás"><svg><use href="#i-lista"/></svg></button>
+</nav>
+
+<!-- folha: nova tarefa -->
+<div class="folha" id="folha-nova" hidden>
+  <div class="folha-caixa" role="dialog" aria-modal="true" aria-labelledby="nova-titulo">
+    <div class="folha-topo">
+      <h2 id="nova-titulo">Nova tarefa</h2>
+      <button class="botao-icone" type="button" data-fechar aria-label="Fechar"><svg><use href="#i-fechar"/></svg></button>
+    </div>
+    <p class="secundario">A lista nasce na sua página Casa. Escreva aqui: o texto vai copiado e a conversa com o agente pessoal abre para você colar.</p>
+    <label for="nova-texto">O que fazer</label>
+    <input id="nova-texto" type="text" autocomplete="off" placeholder="ex.: trocar a roupa de cama">
+    <label for="nova-dia">Para quando</label>
+    <input id="nova-dia" type="date">
+    <button class="botao" id="nova-enviar" type="button">Copiar e abrir o Telegram</button>
+  </div>
+</div>
+
+<!-- folha: menu -->
+<div class="folha" id="folha-menu" hidden>
+  <div class="folha-caixa" role="dialog" aria-modal="true" aria-labelledby="menu-titulo">
+    <div class="folha-topo">
+      <h2 id="menu-titulo">Meu app</h2>
+      <button class="botao-icone" type="button" data-fechar aria-label="Fechar"><svg><use href="#i-fechar"/></svg></button>
+    </div>
+    <button class="menu-item" id="atualizar" type="button"><span aria-hidden="true">↻</span> Atualizar a lista</button>
+    <a class="menu-item" href="https://t.me/isisalencastro_bot" rel="noopener"><span aria-hidden="true">✈</span> Abrir conversa no Telegram</a>
+    <button class="menu-item" id="sair" type="button"><span aria-hidden="true">⎋</span> Sair desta conta</button>
+    <p class="rodape-texto" id="menu-conta"></p>
+    <p class="versao">versão</p>
+  </div>
+</div>
+
 <div class="aviso" id="aviso" role="status" hidden></div>
-<script src="app.js?v=202610031400"></script>
+<script src="app.js?v=202610051200"></script>
 </body>
 </html>
