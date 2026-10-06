@@ -1,9 +1,8 @@
-/* Painel "Meu app". Azul e branco com fundo xadrez; claro por padrao, escuro pelo tema do celular.
+/* Painel "Meu app". Azul e branco, fundo liso com degrade suave; claro por padrao, escuro pelo tema do celular.
    Cada bloco de tarefas tem uma cor propria (--cor), definida no app.js. */
 :root {
-  --fundo: #eef3fb;
-  --xadrez: rgba(47, 111, 214, 0.07);
-  --xadrez-forte: rgba(47, 111, 214, 0.12);
+  --fundo: #f6f9fe;
+  --fundo-2: #e6eefa;
   --topo: rgba(255, 255, 255, 0.88);
   --cartao: rgba(255, 255, 255, 0.86);
   --cartao-solido: #ffffff;
@@ -32,8 +31,7 @@
 @media (prefers-color-scheme: dark) {
   :root {
     --fundo: #0b1220;
-    --xadrez: rgba(91, 156, 240, 0.05);
-    --xadrez-forte: rgba(91, 156, 240, 0.09);
+    --fundo-2: #0a101c;
     --topo: rgba(11, 18, 32, 0.88);
     --cartao: rgba(21, 33, 56, 0.82);
     --cartao-solido: #15223a;
@@ -70,16 +68,13 @@ html, body {
   overscroll-behavior-y: contain;
   -webkit-font-smoothing: antialiased;
 }
-/* xadrez (gingham): duas faixas cruzadas sobre o fundo */
 body {
   min-height: 100dvh;
   background-color: var(--fundo);
-  background-image:
-    repeating-linear-gradient(0deg, var(--xadrez) 0 18px, transparent 18px 36px),
-    repeating-linear-gradient(90deg, var(--xadrez) 0 18px, transparent 18px 36px),
-    repeating-linear-gradient(0deg, transparent 0 8px, var(--xadrez-forte) 8px 10px, transparent 10px 36px);
+  background-image: linear-gradient(180deg, var(--fundo) 0%, var(--fundo-2) 100%);
   background-attachment: fixed;
 }
+.sprite { position: absolute; width: 0; height: 0; overflow: hidden; }
 
 svg { width: 22px; height: 22px; fill: none; stroke: currentColor; stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round; }
 
@@ -718,6 +713,18 @@ svg { width: 22px; height: 22px; fill: none; stroke: currentColor; stroke-width:
   pointer-events: none;
 }
 .aviso.visivel { opacity: 1; transform: translate(-50%, 0); }
+.aviso.com-acao { display: flex; align-items: center; gap: 14px; pointer-events: auto; padding-right: 8px; }
+.aviso-acao {
+  border: 0;
+  background: transparent;
+  color: var(--acento);
+  font: inherit;
+  font-weight: 800;
+  padding: 6px 10px;
+  border-radius: 99px;
+  cursor: pointer;
+}
+@media (prefers-color-scheme: light) { .aviso-acao { color: #8fbaf5; } }
 .aviso.erro-aviso { background: var(--erro); color: #fff; }
 .erro { color: var(--erro); }
 
@@ -757,10 +764,98 @@ svg { width: 22px; height: 22px; fill: none; stroke: currentColor; stroke-width:
 .entrar-caixa .erro { font-size: 0.84rem; margin: 10px 0 0; min-height: 1.1em; }
 .entrar-caixa .rodape-texto { margin: 8px 0 0; font-size: 0.76rem; }
 
+/* ---------- notas (no jeito das Notas do iPhone) ---------- */
+.notas-caixa {
+  background: var(--cartao-solido);
+  border: 1px solid var(--borda);
+  border-radius: 14px;
+  box-shadow: var(--sombra);
+  overflow: hidden;
+  margin-bottom: 6px;
+}
+.nota-linha {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  width: 100%;
+  padding: 11px 16px 12px;
+  border: 0;
+  background: none;
+  color: var(--texto);
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+.nota-linha + .nota-linha::before { content: ""; position: absolute; top: 0; left: 16px; right: 0; border-top: 1px solid var(--divisoria); }
+.nota-linha:active { background: var(--cartao-alto); }
+.nota-linha strong { font-size: 1rem; font-weight: 800; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; padding-right: 22px; }
+.nota-sub { color: var(--secundario); font-size: 0.86rem; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.nota-sub b { color: var(--texto); font-weight: 600; opacity: 0.75; }
+.nota-pino { position: absolute; top: 11px; right: 14px; font-style: normal; font-size: 0.8rem; }
+.notas-rodape { text-align: center; color: var(--secundario); font-size: 0.78rem; font-weight: 600; margin: 18px 0 0; line-height: 1.6; }
+
+body.com-editor { overflow: hidden; }
+body.com-editor .barra { display: none; }
+.nota-editor {
+  position: fixed;
+  inset: 0;
+  z-index: 9;
+  display: flex;
+  flex-direction: column;
+  background: var(--cartao-solido);
+  animation: entra-lado 0.22s cubic-bezier(0.3, 0.7, 0.2, 1) both;
+}
+@keyframes entra-lado { from { transform: translateX(24px); opacity: 0; } }
+.nota-topo {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 4px;
+  padding: calc(env(safe-area-inset-top, 0px) + 6px) 6px 6px;
+  border-bottom: 1px solid var(--divisoria);
+}
+.nota-voltar, .nota-ok {
+  display: inline-flex;
+  align-items: center;
+  gap: 2px;
+  height: 44px;
+  padding: 0 10px 0 4px;
+  border: 0;
+  background: none;
+  color: var(--acento);
+  font: inherit;
+  font-size: 1.02rem;
+  font-weight: 700;
+  cursor: pointer;
+}
+.nota-ok { padding: 0 12px; font-weight: 800; }
+.nota-voltar svg { width: 26px; height: 26px; }
+.nota-acoes { display: flex; align-items: center; }
+.nota-acoes .botao-icone { color: var(--acento); width: 40px; }
+.nota-acoes .botao-icone[aria-pressed="true"] { background: var(--acento-claro); }
+.nota-corpo { flex: 1 1 auto; overflow-y: auto; -webkit-overflow-scrolling: touch; padding: 10px 20px calc(env(safe-area-inset-bottom, 0px) + 40px); }
+.nota-data { margin: 4px 0 10px; text-align: center; color: var(--apagado); font-size: 0.8rem; font-weight: 600; }
+#nota-texto {
+  display: block;
+  width: 100%;
+  min-height: 60vh;
+  border: 0;
+  outline: none;
+  resize: none;
+  background: transparent;
+  color: var(--texto);
+  font: inherit;
+  font-size: 1.05rem;
+  line-height: 1.55;
+  overflow: hidden;
+}
+#nota-texto::placeholder { color: var(--apagado); }
+
 /* ---------- foco visivel ---------- */
 .botao-icone:focus-visible, .botao:focus-visible, .marca:focus-visible, .dia:focus-visible,
 .seta:focus-visible, .barra button:focus-visible, .humor:focus-visible, .menu-item:focus-visible,
-.pontos button:focus-visible { outline: 2px solid var(--acento-forte); outline-offset: 2px; }
+.pontos button:focus-visible, .nota-linha:focus-visible, .nota-voltar:focus-visible, .nota-ok:focus-visible, .aviso-acao:focus-visible { outline: 2px solid var(--acento-forte); outline-offset: 2px; }
 
 /* ---------- entrada suave ---------- */
 .vista { animation: entra 0.3s ease both; }
