@@ -4,7 +4,7 @@ const CFG = {
   url: "https://xpkycwxzvhtaylwferiu.supabase.co",
   chave: "sb_publishable_SDGO156OgN9m5HrqcnLeAQ_fcnYctqU",
 };
-const VERSAO = "202610051200";
+const VERSAO = "202610051500";
 const CHAVE_SESSAO = "painel.sessao.v1";
 const CHAVE_LISTA = "painel.lista.v1";      // ultima lista boa, para abrir na hora e sem internet
 const DIAS_PARA_TRAS = 7;                   // pendencias atrasadas que ainda aparecem
@@ -354,7 +354,7 @@ function atualizarResumo() {
 function festejar() {
   if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
   const anel = $(".anel");
-  const cores = ["#8b78c2", "#d48bb4", "#6db3a0", "#d2a65e"];
+  const cores = ["#2f6fd6", "#5b9cf0", "#2a9d7c", "#ffffff"];
   for (let i = 0; i < 18; i++) {
     const p = criar("i", "confete");
     const ang = (i / 18) * Math.PI * 2;
@@ -445,7 +445,7 @@ function renderSemana() {
   marcarSemana();
 }
 
-// ponto lilas: dia com tarefa; ponto verde: dia todo feito
+// ponto azul: dia com tarefa; ponto verde: dia todo feito
 function marcarSemana() {
   for (const b of document.querySelectorAll("#semana-dias .dia")) {
     const itens = ultimas.filter((t) => t.due_date === b.dataset.dia);

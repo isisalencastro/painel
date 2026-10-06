@@ -37,9 +37,9 @@ definidos no `style.css` (azul, rosa, verde, ambar, coral, violeta, laranja).
 
 ## Layout desde 05/10/2026
 
-Lilás com fundo xadrez, barra inferior com cinco botões: Hoje, Agenda, + (nova tarefa), Bem-estar e Ficou para trás.
+Azul e branco com fundo xadrez, barra inferior com cinco botões: Hoje, Agenda, + (nova tarefa), Bem-estar e Ficou para trás.
 
-- **Hoje:** frase do dia (toque troca), humor do dia, faixa da semana (toque ou deslize troca o dia; ponto lilás é dia
+- **Hoje:** frase do dia (toque troca), humor do dia, faixa da semana (toque ou deslize troca o dia; ponto azul é dia
   com tarefa, verde é dia todo feito) e a lista do dia, um cartão por bloco com a conta "feitas/total" ao lado.
   O olho esconde as feitas.
 - **+:** não grava no banco, porque a lista nasce no Notion e a sincronização do agente pessoal mandaria nela. Copia

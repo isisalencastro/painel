@@ -1,28 +1,28 @@
-/* Painel "Meu app". Lilas com fundo xadrez; claro por padrao, escuro pelo tema do celular.
+/* Painel "Meu app". Azul e branco com fundo xadrez; claro por padrao, escuro pelo tema do celular.
    Cada bloco de tarefas tem uma cor propria (--cor), definida no app.js. */
 :root {
-  --fundo: #ebe5f6;
-  --xadrez: rgba(150, 125, 200, 0.13);
-  --xadrez-forte: rgba(150, 125, 200, 0.2);
-  --topo: rgba(226, 217, 243, 0.86);
-  --cartao: rgba(255, 255, 255, 0.72);
-  --cartao-solido: #f9f7fd;
-  --cartao-alto: #efe9f9;
-  --borda: rgba(120, 95, 170, 0.14);
-  --divisoria: rgba(120, 95, 170, 0.12);
-  --texto: #2b2540;
-  --secundario: #6f6788;
-  --apagado: #9f97b5;
-  --lilas: #8b78c2;
-  --lilas-forte: #6f5ba8;
-  --lilas-claro: #d9cff0;
+  --fundo: #eef3fb;
+  --xadrez: rgba(47, 111, 214, 0.07);
+  --xadrez-forte: rgba(47, 111, 214, 0.12);
+  --topo: rgba(255, 255, 255, 0.88);
+  --cartao: rgba(255, 255, 255, 0.86);
+  --cartao-solido: #ffffff;
+  --cartao-alto: #eaf1fc;
+  --borda: rgba(24, 70, 150, 0.12);
+  --divisoria: rgba(24, 70, 150, 0.1);
+  --texto: #12233f;
+  --secundario: #5a6b85;
+  --apagado: #9aa8bd;
+  --acento: #2f6fd6;
+  --acento-forte: #185cb6;
+  --acento-claro: #d6e5fb;
   --verde: #4aa77d;
-  --anel-fundo: rgba(120, 95, 170, 0.16);
+  --anel-fundo: rgba(24, 70, 150, 0.12);
   --campo: #ffffff;
-  --aviso-fundo: #2b2540;
+  --aviso-fundo: #12233f;
   --aviso-texto: #ffffff;
-  --erro: #c2416b;
-  --sombra: 0 1px 2px rgba(60, 40, 110, 0.06), 0 6px 18px rgba(60, 40, 110, 0.07);
+  --erro: #c62828;
+  --sombra: 0 1px 2px rgba(18, 45, 100, 0.06), 0 6px 18px rgba(18, 45, 100, 0.07);
   --raio: 20px;
   --raio-p: 12px;
   --barra-alt: 64px;
@@ -31,27 +31,27 @@
 
 @media (prefers-color-scheme: dark) {
   :root {
-    --fundo: #1b1726;
-    --xadrez: rgba(170, 145, 230, 0.06);
-    --xadrez-forte: rgba(170, 145, 230, 0.1);
-    --topo: rgba(27, 23, 38, 0.86);
-    --cartao: rgba(43, 37, 61, 0.78);
-    --cartao-solido: #2b253d;
-    --cartao-alto: #352e4b;
-    --borda: rgba(200, 185, 245, 0.1);
-    --divisoria: rgba(200, 185, 245, 0.09);
-    --texto: #f1edfb;
-    --secundario: #b1a8cc;
-    --apagado: #7d7598;
-    --lilas: #a995e6;
-    --lilas-forte: #8f78d6;
-    --lilas-claro: #463b66;
+    --fundo: #0b1220;
+    --xadrez: rgba(91, 156, 240, 0.05);
+    --xadrez-forte: rgba(91, 156, 240, 0.09);
+    --topo: rgba(11, 18, 32, 0.88);
+    --cartao: rgba(21, 33, 56, 0.82);
+    --cartao-solido: #15223a;
+    --cartao-alto: #1c2c49;
+    --borda: rgba(150, 190, 255, 0.1);
+    --divisoria: rgba(150, 190, 255, 0.08);
+    --texto: #eef4ff;
+    --secundario: #9fb0cc;
+    --apagado: #6b7c98;
+    --acento: #5b9cf0;
+    --acento-forte: #4d8ce6;
+    --acento-claro: #1f3a66;
     --verde: #6cc79c;
-    --anel-fundo: rgba(200, 185, 245, 0.14);
-    --campo: #221d31;
-    --aviso-fundo: #f1edfb;
-    --aviso-texto: #1b1726;
-    --erro: #ff8fae;
+    --anel-fundo: rgba(150, 190, 255, 0.12);
+    --campo: #101a2d;
+    --aviso-fundo: #eef4ff;
+    --aviso-texto: #0b1220;
+    --erro: #ff8f8f;
     --sombra: 0 1px 0 rgba(255, 255, 255, 0.03) inset, 0 6px 18px rgba(0, 0, 0, 0.25);
     color-scheme: dark;
   }
@@ -70,7 +70,7 @@ html, body {
   overscroll-behavior-y: contain;
   -webkit-font-smoothing: antialiased;
 }
-/* xadrez (gingham): duas faixas cruzadas sobre o lilas */
+/* xadrez (gingham): duas faixas cruzadas sobre o fundo */
 body {
   min-height: 100dvh;
   background-color: var(--fundo);
@@ -125,7 +125,7 @@ svg { width: 22px; height: 22px; fill: none; stroke: currentColor; stroke-width:
 }
 .botao-icone:active { transform: scale(0.9); background: var(--cartao-alto); }
 .botao-icone.redondo { width: 38px; height: 38px; border: 1.5px solid var(--borda); background: var(--cartao); }
-.botao-icone.redondo[aria-pressed="true"] { background: var(--lilas); color: #fff; border-color: var(--lilas); }
+.botao-icone.redondo[aria-pressed="true"] { background: var(--acento); color: #fff; border-color: var(--acento); }
 .sino-conta {
   position: absolute;
   top: 6px;
@@ -176,8 +176,8 @@ svg { width: 22px; height: 22px; fill: none; stroke: currentColor; stroke-width:
   width: 22px; height: 22px; padding: 0; border: 0; background: none; cursor: pointer;
   display: grid; place-items: center;
 }
-.pontos button::after { content: ""; width: 6px; height: 6px; border-radius: 50%; background: var(--lilas-claro); transition: background-color 0.2s, transform 0.2s; }
-.pontos button[aria-current="true"]::after { background: var(--lilas); transform: scale(1.25); }
+.pontos button::after { content: ""; width: 6px; height: 6px; border-radius: 50%; background: var(--acento-claro); transition: background-color 0.2s, transform 0.2s; }
+.pontos button[aria-current="true"]::after { background: var(--acento); transform: scale(1.25); }
 
 /* ---------- humor ---------- */
 .humor {
@@ -189,7 +189,7 @@ svg { width: 22px; height: 22px; fill: none; stroke: currentColor; stroke-width:
   padding: 14px 18px;
   border: 0;
   border-radius: 16px;
-  background: var(--lilas);
+  background: var(--acento);
   color: #fff;
   font: inherit;
   text-align: left;
@@ -218,7 +218,7 @@ svg { width: 22px; height: 22px; fill: none; stroke: currentColor; stroke-width:
   font-weight: 700;
   cursor: pointer;
 }
-.humor-opcoes button[aria-pressed="true"] { background: var(--lilas-forte); color: #fff; border-color: transparent; }
+.humor-opcoes button[aria-pressed="true"] { background: var(--acento-forte); color: #fff; border-color: transparent; }
 
 /* ---------- semana ---------- */
 .semana { padding: 14px 12px 14px; }
@@ -272,13 +272,13 @@ svg { width: 22px; height: 22px; fill: none; stroke: currentColor; stroke-width:
   border-radius: 50%;
   background: transparent;
 }
-.dia.tem::after { background: var(--lilas); }
+.dia.tem::after { background: var(--acento); }
 .dia.fechado::after { background: var(--verde); }
-.dia.hoje strong { color: var(--lilas-forte); }
+.dia.hoje strong { color: var(--acento-forte); }
 .dia[aria-selected="true"] {
-  background: var(--lilas-claro);
-  border-color: color-mix(in srgb, var(--lilas) 45%, transparent);
-  box-shadow: inset 0 2px 4px rgba(60, 40, 110, 0.12);
+  background: var(--acento-claro);
+  border-color: color-mix(in srgb, var(--acento) 45%, transparent);
+  box-shadow: inset 0 2px 4px rgba(18, 45, 100, 0.12);
 }
 .dia.fora { opacity: 0.4; }
 
@@ -298,7 +298,7 @@ svg { width: 22px; height: 22px; fill: none; stroke: currentColor; stroke-width:
 .anel-fundo { fill: none; stroke: var(--anel-fundo); stroke-width: 12; }
 .anel-valor {
   fill: none;
-  stroke: var(--lilas);
+  stroke: var(--acento);
   stroke-width: 12;
   stroke-linecap: round;
   stroke-dasharray: 327;
@@ -345,7 +345,7 @@ svg { width: 22px; height: 22px; fill: none; stroke: currentColor; stroke-width:
 .linha-dia:empty { display: none; }
 .linha-dia .vazio { padding: 18px 8px 22px; }
 .grupo {
-  --cor: var(--lilas);
+  --cor: var(--acento);
   display: grid;
   grid-template-columns: 52px 1fr;
   gap: 10px;
@@ -448,18 +448,18 @@ svg { width: 22px; height: 22px; fill: none; stroke: currentColor; stroke-width:
 .esconde-feitas .tarefa.feita { display: none; }
 .esconde-feitas .grupo-completo { display: none; }
 
-/* cor de cada bloco (o nome sai do mapa CORES, no app.js): tons pastel que conversam com o lilas */
+/* cor de cada bloco (o nome sai do mapa CORES, no app.js): tons que conversam com o azul */
 :root {
-  --cor-azul: #7f9bd8; --cor-rosa: #d48bb4; --cor-verde: #6db3a0; --cor-ambar: #d2a65e;
-  --cor-coral: #d98b84; --cor-violeta: #8b78c2; --cor-laranja: #d99a6c; --cor-cinza: #9a93ae;
+  --cor-azul: #2f6fd6; --cor-rosa: #d65f8f; --cor-verde: #2a9d7c; --cor-ambar: #c98a12;
+  --cor-coral: #d9634a; --cor-violeta: #6a63d6; --cor-laranja: #d97a22; --cor-cinza: #7d8aa3;
 }
 @media (prefers-color-scheme: dark) {
   :root {
-    --cor-azul: #8eaaea; --cor-rosa: #e39cc4; --cor-verde: #7cc5b1; --cor-ambar: #e3b871;
-    --cor-coral: #ea9d96; --cor-violeta: #a995e6; --cor-laranja: #eaac80; --cor-cinza: #a8a1bd;
+    --cor-azul: #5b9cf0; --cor-rosa: #f07aa8; --cor-verde: #3cc4a0; --cor-ambar: #f0b44a;
+    --cor-coral: #f27b5f; --cor-violeta: #a29cf5; --cor-laranja: #f59a42; --cor-cinza: #9fb0cc;
   }
-  .grupo-topo, .tarefa.feita .marca, .humor { color: #1b1726; }
-  .humor .etiqueta { color: rgba(27, 23, 38, 0.7); }
+  .grupo-topo, .tarefa.feita .marca, .humor { color: #0b1220; }
+  .humor .etiqueta { color: rgba(11, 18, 32, 0.7); }
 }
 [data-cor="azul"]    { --cor: var(--cor-azul); }
 [data-cor="rosa"]    { --cor: var(--cor-rosa); }
@@ -472,7 +472,7 @@ svg { width: 22px; height: 22px; fill: none; stroke: currentColor; stroke-width:
 
 /* lista simples (pendencias, busca, cuidados): cartao unico com linhas */
 .lista-solta {
-  --cor: var(--lilas);
+  --cor: var(--acento);
   background: var(--cartao);
   border: 1px solid var(--borda);
   border-radius: var(--raio);
@@ -500,8 +500,8 @@ svg { width: 22px; height: 22px; fill: none; stroke: currentColor; stroke-width:
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  background: var(--lilas-claro);
-  color: var(--lilas-forte);
+  background: var(--acento-claro);
+  color: var(--acento-forte);
 }
 @media (prefers-color-scheme: dark) { .adp-numero { color: var(--texto); } }
 .adp-numero strong { font-size: 1.75rem; font-weight: 800; line-height: 1; font-variant-numeric: tabular-nums; }
@@ -536,7 +536,7 @@ svg { width: 22px; height: 22px; fill: none; stroke: currentColor; stroke-width:
 }
 .quando strong { font-size: 1.2rem; font-weight: 800; font-variant-numeric: tabular-nums; }
 .quando span { margin-top: 4px; color: var(--secundario); font-size: 0.66rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.04em; }
-.quando.agora { background: var(--lilas-claro); }
+.quando.agora { background: var(--acento-claro); }
 .dia-corpo { flex: 1 1 auto; min-width: 0; padding-top: 2px; }
 .dia-falta { margin: 0 0 4px; color: var(--secundario); font-size: 0.74rem; font-weight: 700; }
 .lista-dia { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 4px; font-size: 0.94rem; font-weight: 600; }
@@ -549,7 +549,7 @@ svg { width: 22px; height: 22px; fill: none; stroke: currentColor; stroke-width:
 .humor-semana small { font-size: 0.68rem; font-weight: 700; color: var(--secundario); text-transform: capitalize; }
 .barras { display: grid; grid-template-columns: repeat(7, 1fr); gap: 8px; align-items: end; height: 120px; padding-top: 8px; }
 .barra-dia { display: flex; flex-direction: column; align-items: center; justify-content: flex-end; height: 100%; gap: 4px; }
-.barra-dia i { display: block; width: 100%; max-width: 26px; border-radius: 8px 8px 4px 4px; background: var(--lilas); min-height: 4px; transition: height 0.5s ease; }
+.barra-dia i { display: block; width: 100%; max-width: 26px; border-radius: 8px 8px 4px 4px; background: var(--acento); min-height: 4px; transition: height 0.5s ease; }
 .barra-dia.cheio i { background: var(--verde); }
 .barra-dia span { font-size: 0.68rem; font-weight: 700; color: var(--secundario); font-variant-numeric: tabular-nums; }
 .barra-dia small { font-size: 0.66rem; font-weight: 700; color: var(--secundario); text-transform: capitalize; }
@@ -601,18 +601,18 @@ svg { width: 22px; height: 22px; fill: none; stroke: currentColor; stroke-width:
   padding: 0;
 }
 .barra button svg { width: 26px; height: 26px; }
-.barra button[aria-current="page"] { color: var(--lilas-forte); }
+.barra button[aria-current="page"] { color: var(--acento-forte); }
 .barra button[aria-current="page"] svg { stroke-width: 2.2; }
-@media (prefers-color-scheme: dark) { .barra button[aria-current="page"] { color: var(--lilas); } }
+@media (prefers-color-scheme: dark) { .barra button[aria-current="page"] { color: var(--acento); } }
 .barra .barra-mais {
   justify-self: center;
   width: 60px;
   height: 60px;
   margin-top: -30px;
   border-radius: 50%;
-  background: var(--lilas);
+  background: var(--acento);
   color: #fff;
-  box-shadow: 0 6px 16px color-mix(in srgb, var(--lilas) 45%, transparent);
+  box-shadow: 0 6px 16px color-mix(in srgb, var(--acento) 45%, transparent);
   transition: transform 0.15s ease;
 }
 .barra .barra-mais svg { width: 28px; height: 28px; stroke-width: 2.4; }
@@ -626,7 +626,7 @@ svg { width: 22px; height: 22px; fill: none; stroke: currentColor; stroke-width:
   display: flex;
   align-items: flex-end;
   justify-content: center;
-  background: rgba(30, 20, 50, 0.35);
+  background: rgba(10, 25, 55, 0.35);
   animation: aparece 0.2s ease both;
 }
 @keyframes aparece { from { opacity: 0; } }
@@ -636,7 +636,7 @@ svg { width: 22px; height: 22px; fill: none; stroke: currentColor; stroke-width:
   background: var(--cartao-solido);
   border-radius: 24px 24px 0 0;
   padding: 16px 18px calc(env(safe-area-inset-bottom, 0px) + 22px);
-  box-shadow: 0 -10px 30px rgba(30, 20, 50, 0.2);
+  box-shadow: 0 -10px 30px rgba(10, 25, 55, 0.2);
   animation: sobe 0.25s cubic-bezier(0.3, 0.7, 0.2, 1) both;
 }
 @keyframes sobe { from { transform: translateY(40px); opacity: 0.4; } }
@@ -653,7 +653,7 @@ svg { width: 22px; height: 22px; fill: none; stroke: currentColor; stroke-width:
   padding: 13px 14px;
   transition: border-color 0.15s ease, box-shadow 0.15s ease;
 }
-.folha input:focus, .entrar-caixa input:focus { outline: none; border-color: var(--lilas); box-shadow: 0 0 0 3px color-mix(in srgb, var(--lilas) 25%, transparent); }
+.folha input:focus, .entrar-caixa input:focus { outline: none; border-color: var(--acento); box-shadow: 0 0 0 3px color-mix(in srgb, var(--acento) 25%, transparent); }
 .folha .botao { width: 100%; margin-top: 18px; }
 .menu-item {
   display: flex;
@@ -671,7 +671,7 @@ svg { width: 22px; height: 22px; fill: none; stroke: currentColor; stroke-width:
   text-align: left;
   cursor: pointer;
 }
-.menu-item span { width: 22px; text-align: center; color: var(--lilas); }
+.menu-item span { width: 22px; text-align: center; color: var(--acento); }
 .menu-item.girando span { display: inline-block; animation: gira 0.9s linear infinite; }
 @keyframes gira { to { transform: rotate(360deg); } }
 
@@ -681,7 +681,7 @@ svg { width: 22px; height: 22px; fill: none; stroke: currentColor; stroke-width:
   align-items: center;
   justify-content: center;
   gap: 8px;
-  background: var(--lilas-forte);
+  background: var(--acento-forte);
   color: #fff;
   text-decoration: none;
   padding: 14px 22px;
@@ -712,7 +712,7 @@ svg { width: 22px; height: 22px; fill: none; stroke: currentColor; stroke-width:
   border-radius: 999px;
   font-size: 0.85rem;
   font-weight: 700;
-  box-shadow: 0 10px 30px rgba(30, 20, 50, 0.3);
+  box-shadow: 0 10px 30px rgba(10, 25, 55, 0.3);
   opacity: 0;
   transition: opacity 0.22s ease, transform 0.22s ease;
   pointer-events: none;
@@ -745,7 +745,7 @@ svg { width: 22px; height: 22px; fill: none; stroke: currentColor; stroke-width:
   display: grid;
   place-items: center;
   margin-bottom: 16px;
-  background: linear-gradient(145deg, var(--lilas), var(--lilas-forte));
+  background: linear-gradient(145deg, var(--acento), var(--acento-forte));
   color: #fff;
   font-size: 1.3rem;
   font-weight: 800;
@@ -760,7 +760,7 @@ svg { width: 22px; height: 22px; fill: none; stroke: currentColor; stroke-width:
 /* ---------- foco visivel ---------- */
 .botao-icone:focus-visible, .botao:focus-visible, .marca:focus-visible, .dia:focus-visible,
 .seta:focus-visible, .barra button:focus-visible, .humor:focus-visible, .menu-item:focus-visible,
-.pontos button:focus-visible { outline: 2px solid var(--lilas-forte); outline-offset: 2px; }
+.pontos button:focus-visible { outline: 2px solid var(--acento-forte); outline-offset: 2px; }
 
 /* ---------- entrada suave ---------- */
 .vista { animation: entra 0.3s ease both; }
