@@ -4,7 +4,7 @@ const CFG = {
   url: "https://xpkycwxzvhtaylwferiu.supabase.co",
   chave: "sb_publishable_SDGO156OgN9m5HrqcnLeAQ_fcnYctqU",
 };
-const VERSAO = "202610051500";
+const VERSAO = "202610052300";
 const CHAVE_SESSAO = "painel.sessao.v1";
 const CHAVE_LISTA = "painel.lista.v1";      // ultima lista boa, para abrir na hora e sem internet
 const DIAS_PARA_TRAS = 7;                   // pendencias atrasadas que ainda aparecem
@@ -23,6 +23,9 @@ const CORES = {
 };
 
 const $ = (s) => document.querySelector(s);
+
+// Dentro de um iframe de outro site o painel nao abre (evita clique enganado por cima da tela).
+if (window.top !== window.self) document.documentElement.hidden = true;
 // Texto vindo do banco entra sempre como texto, nunca como HTML.
 const criar = (tag, cls, texto) => {
   const el = document.createElement(tag);
@@ -54,6 +57,14 @@ function guardarSessao(s) {
   gravar(CHAVE_SESSAO, s);
 }
 function sair() {
+  const s = sessao();
+  if (typeof limparNotasDaTela === "function") limparNotasDaTela();
+  // revoga a sessao no servidor tambem: quem copiar o token do aparelho nao entra mais
+  if (s && s.access_token) {
+    fetch(CFG.url + "/auth/v1/logout", {
+      method: "POST", headers: { apikey: CFG.chave, Authorization: "Bearer " + s.access_token },
+    }).catch(() => {});
+  }
   sessaoViva = null;
   apagar(CHAVE_SESSAO);
   apagar(CHAVE_LISTA);
@@ -131,9 +142,9 @@ async function banco(caminho, opcoes) {
     }, o.cabecalhos || {}),
   });
   if (r.status === 401) { sair(); throw new Error("sessão expirada"); }
-  if (!r.ok) throw new Error("HTTP " + r.status);
-  if (o.metodo === "PATCH" || r.status === 204) return null;
-  return r.json();
+  if (!r.ok) { const e = new Error("HTTP " + r.status); e.status = r.status; throw e; }
+  const txt = await r.text();
+  return txt ? JSON.parse(txt) : null;
 }
 
 /* ------------------------------ utilidades ------------------------------ */
@@ -146,17 +157,27 @@ function saudacao() {
   return "Boa noite";
 }
 
-function aviso(txt, erro) {
+// acao opcional: { rotulo, fazer } vira um botao no aviso (ex.: Desfazer), que fica mais tempo na tela
+function aviso(txt, erro, acao) {
   const box = $("#aviso");
-  box.textContent = txt;
+  box.replaceChildren(criar("span", null, txt));
+  if (acao) {
+    const b = criar("button", "aviso-acao", acao.rotulo);
+    b.type = "button";
+    b.addEventListener("click", () => { esconder(); acao.fazer(); });
+    box.appendChild(b);
+  }
   box.classList.toggle("erro-aviso", !!erro);
+  box.classList.toggle("com-acao", !!acao);
   box.hidden = false;
   requestAnimationFrame(() => box.classList.add("visivel"));
-  clearTimeout(aviso._t);
-  aviso._t = setTimeout(() => {
+  function esconder() {
+    clearTimeout(aviso._t);
     box.classList.remove("visivel");
-    setTimeout(() => { box.hidden = true; }, 250);
-  }, 2200);
+    setTimeout(() => { if (!box.classList.contains("visivel")) box.hidden = true; }, 250);
+  }
+  clearTimeout(aviso._t);
+  aviso._t = setTimeout(esconder, acao ? 5000 : 2400);
 }
 
 function vibrar(ms) {
@@ -260,6 +281,7 @@ function linhaTarefa(item, extra) {
   };
   el.addEventListener("click", (ev) => {
     ev.preventDefault();
+    if (Date.now() - deslizouEm < 450) return;   // o toque que encerra um deslize nao conta como marcar
     if (el.classList.contains("ocupada")) return;
     el.classList.add("ocupada");
     item.feito = !item.feito;
@@ -609,11 +631,13 @@ function renderBusca() {
   const q = semAcento($("#busca").value.trim());
   const alvo = $("#busca-resultado");
   alvo.replaceChildren();
-  if (!q) { alvo.appendChild(criar("p", "secundario", "Busca no que o app carregou: os últimos 7 dias e os próximos 30.")); return; }
+  if (!q) { alvo.appendChild(criar("p", "secundario", "Busca nas notas e nas tarefas carregadas: dos últimos 7 dias aos próximos 30.")); return; }
   const hoje = hojeISO();
   const achadas = ultimas.filter((t) => semAcento(t.titulo + " " + t.bloco).includes(q))
     .sort((a, b) => a.due_date.localeCompare(b.due_date));
-  if (!achadas.length) { alvo.appendChild(criar("p", "secundario", "Nada encontrado.")); return; }
+  const notasAchadas = typeof notasQueCasam === "function" ? notasQueCasam(q) : [];
+  if (!achadas.length && !notasAchadas.length) { alvo.appendChild(criar("p", "secundario", "Nada encontrado.")); return; }
+  if (notasAchadas.length) alvo.appendChild(caixaNotas("Notas", notasAchadas, q));
   const partes = [["Para trás", achadas.filter((t) => t.due_date < hoje)],
     ["Hoje", achadas.filter((t) => t.due_date === hoje)],
     ["Próximos dias", achadas.filter((t) => t.due_date > hoje)]];
@@ -638,6 +662,9 @@ function irPara(nome, quieto) {
   if (nome === "bem") renderBem();
   if (nome === "busca") { renderBusca(); if (!quieto) setTimeout(() => $("#busca").focus(), 50); }
   if (nome === "hoje") renderDia();
+  if (nome === "notas") renderNotas();
+  const mais = $("#abrir-nova");
+  mais.setAttribute("aria-label", nome === "notas" ? "Nova nota" : "Nova tarefa");
   if (!quieto) window.scrollTo({ top: 0 });
 }
 
@@ -716,6 +743,7 @@ async function carregar() {
 }
 
 // deslizar para o lado troca o dia (na lista) ou a semana (na faixa)
+let deslizouEm = 0;
 function aoDeslizar(el, fn) {
   let x0 = null, y0 = null;
   el.addEventListener("touchstart", (e) => { x0 = e.touches[0].clientX; y0 = e.touches[0].clientY; }, { passive: true });
@@ -723,7 +751,7 @@ function aoDeslizar(el, fn) {
     if (x0 === null) return;
     const dx = e.changedTouches[0].clientX - x0, dy = e.changedTouches[0].clientY - y0;
     x0 = null;
-    if (Math.abs(dx) > 60 && Math.abs(dy) < 45) fn(dx < 0 ? 1 : -1);
+    if (Math.abs(dx) > 60 && Math.abs(dy) < 45) { deslizouEm = Date.now(); fn(dx < 0 ? 1 : -1); }
   }, { passive: true });
 }
 
@@ -739,6 +767,7 @@ $("#form-entrar").addEventListener("submit", async (ev) => {
   try {
     await entrar($("#entrar-email").value.trim(), $("#entrar-senha").value.trim());
     $("#entrar-senha").value = "";
+    if (typeof notasAoEntrar === "function") notasAoEntrar();
     await carregar();
   } catch (e) {
     erro.textContent = navigator.onLine === false ? "Sem internet. Conecte e tente de novo." : e.message;
@@ -754,6 +783,7 @@ $("#abrir-menu").addEventListener("click", () => abrirFolha("#folha-menu"));
 $("#abrir-busca").addEventListener("click", () => irPara(vista === "busca" ? "hoje" : "busca"));
 $("#busca").addEventListener("input", renderBusca);
 $("#sino").addEventListener("click", () => irPara("pendentes"));
+$("#ir-pendentes").addEventListener("click", () => { fecharFolhas(); irPara("pendentes"); });
 for (const b of document.querySelectorAll("#barra [data-ir]")) b.addEventListener("click", () => irPara(b.dataset.ir));
 
 $("#afirmacao").addEventListener("click", () => { fraseExtra++; renderFrase(true); });
@@ -783,6 +813,7 @@ $("#esconder-feitas").addEventListener("click", () => {
 
 // "+": a lista nasce no Notion, entao a tarefa nova vai pelo agente pessoal (texto copiado e conversa aberta)
 $("#abrir-nova").addEventListener("click", () => {
+  if (vista === "notas") { novaNota(); return; }
   $("#nova-dia").value = diaSel;
   abrirFolha("#folha-nova");
 });
@@ -795,7 +826,7 @@ $("#nova-enviar").addEventListener("click", async () => {
   catch (e) { aviso("Não consegui copiar. Escreva na conversa: " + msg, true); }
   $("#nova-texto").value = "";
   fecharFolhas();
-  setTimeout(() => { location.href = "https://t.me/isisalencastro_bot"; }, 700);
+  setTimeout(() => { window.open("https://t.me/isisalencastro_bot", "_blank", "noopener"); }, 700);
 });
 for (const f of document.querySelectorAll(".folha")) {
   f.addEventListener("click", (ev) => { if (ev.target === f || ev.target.closest("[data-fechar]")) fecharFolhas(); });

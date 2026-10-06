@@ -37,7 +37,8 @@ definidos no `style.css` (azul, rosa, verde, ambar, coral, violeta, laranja).
 
 ## Layout desde 05/10/2026
 
-Azul e branco com fundo xadrez, barra inferior com cinco botões: Hoje, Agenda, + (nova tarefa), Bem-estar e Ficou para trás.
+Azul e branco, fundo liso. Barra inferior com cinco botões: Hoje, Agenda, + (nova tarefa, ou nova nota na aba Notas), Bem-estar e Notas.
+"Ficou para trás" abre pelo sino e pelo menu.
 
 - **Hoje:** frase do dia (toque troca), humor do dia, faixa da semana (toque ou deslize troca o dia; ponto azul é dia
   com tarefa, verde é dia todo feito) e a lista do dia, um cartão por bloco com a conta "feitas/total" ao lado.
@@ -46,3 +47,24 @@ Azul e branco com fundo xadrez, barra inferior com cinco botões: Hoje, Agenda, 
   "Adicionar na Casa: ..." e abre a conversa com o agente.
 - **Humor e "esconder feitas"** ficam só no aparelho (`localStorage`), não no banco.
 - **Busca** e o **sino** (pendências atrasadas) usam o que o app já carregou: 7 dias para trás e 30 para frente.
+
+## Notas (desde 05/10/2026)
+
+No jeito das Notas do iPhone: lista por data com fixadas no topo, busca, editor de tela cheia, caixinhas de
+checklist (botão na barra; tocar na caixinha marca; Enter abre outra), fixar, compartilhar e apagar com "Desfazer".
+Código em `notas.js`.
+
+- Guarda primeiro no aparelho, por conta (`painel.notas.v1:<e-mail>`), e sincroniza com a tabela `notes` do
+  Supabase. **A tabela precisa ser criada uma vez** com `supabase/notes.sql` (SQL Editor do Supabase). Sem ela o
+  app avisa "Só neste aparelho" e, quando a tabela aparece, sobe tudo na próxima abertura.
+- Conflito: vale a versão mais nova (`updated_at`). Apagar marca `deleted = true`, para o apagar chegar aos outros
+  aparelhos.
+- Ao sair da conta, a cópia do aparelho é apagada se tudo já está no banco; se só existe aqui, fica guardada.
+
+## Segurança
+
+- Política de conteúdo (CSP) no `index.html`: só scripts do próprio site, conexão só com o Supabase do projeto.
+  Trocar o projeto do Supabase exige trocar a URL ali e no `app.js`.
+- Sair revoga a sessão no servidor (`/auth/v1/logout`), não só no aparelho.
+- O painel não abre dentro de iframe de outro site.
+- Texto do banco e das notas entra na tela sempre como texto, nunca como HTML.
