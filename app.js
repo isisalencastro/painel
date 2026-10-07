@@ -1,26 +1,19 @@
-// Painel pessoal da Isis: le a lista do dia no banco e deixa marcar na tela.
-// A lista nasce na pagina "Casa" do Notion; o status vive aqui, no banco.
+// Painel pessoal da Isis ("Meu app"): rotina do dia, tarefas por dia, notas e bem-estar.
+// Este arquivo e a casca: sessao, banco, navegacao, faixa da semana, bem-estar e busca.
+// Os dados moram no dados.js; as telas em rotina.js, tarefas.js e notas.js (carregados depois deste).
 const CFG = {
   url: "https://xpkycwxzvhtaylwferiu.supabase.co",
   chave: "sb_publishable_SDGO156OgN9m5HrqcnLeAQ_fcnYctqU",
 };
-const VERSAO = "202610071200";
+const VERSAO = "202610071900";
 const CHAVE_SESSAO = "painel.sessao.v1";
-const CHAVE_LISTA = "painel.lista.v1";      // ultima lista boa, para abrir na hora e sem internet
-const DIAS_PARA_TRAS = 7;                   // pendencias atrasadas que ainda aparecem
-const DIAS_PARA_FRENTE = 30;
-const RECARREGA_APOS_MS = 60 * 1000;        // voltar ao app recarrega, mas nao a cada toque
-// cor de cada bloco de tarefas na tela (o tom fica no style.css); bloco novo cai no cinza
-const CORES = {
-  "Diárias da casa": "azul", "Cuidados pessoais": "rosa", "Semanais": "verde", "Mensais": "ambar",
-  "Vídeos da semana": "coral", "Estudos": "violeta", "Conteúdo do dia": "laranja",
-};
+const DIAS_NAVEGAVEIS = 60;                 // a faixa da semana anda ate 60 dias para tras e para frente
 
 const $ = (s) => document.querySelector(s);
 
 // Dentro de um iframe de outro site o painel nao abre (evita clique enganado por cima da tela).
 if (window.top !== window.self) document.documentElement.hidden = true;
-// Texto vindo do banco entra sempre como texto, nunca como HTML.
+// Texto do banco entra sempre como texto, nunca como HTML.
 const criar = (tag, cls, texto) => {
   const el = document.createElement(tag);
   if (cls) el.className = cls;
@@ -53,7 +46,7 @@ function guardarSessao(s) {
 function sair() {
   const s = sessao();
   if (typeof limparNotasDaTela === "function") limparNotasDaTela();
-  if (typeof limparRotinaDaTela === "function") limparRotinaDaTela();
+  if (typeof limparDadosDaTela === "function") limparDadosDaTela();
   // revoga a sessao no servidor tambem: quem copiar o token do aparelho nao entra mais
   if (s && s.access_token) {
     fetch(CFG.url + "/auth/v1/logout", {
@@ -62,8 +55,6 @@ function sair() {
   }
   sessaoViva = null;
   apagar(CHAVE_SESSAO);
-  apagar(CHAVE_LISTA);
-  ultimas = [];
   mostrarEntrada();
 }
 
@@ -199,6 +190,7 @@ function quandoFalta(n) {
   if (n === -1) return "ontem";
   return n > 0 ? "em " + n + " dias" : "há " + (-n) + " dias";
 }
+function semAcento(t) { return String(t).normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase(); }
 
 const CHAVE_HUMOR = "painel.humor.v1";       // humor por dia, so neste aparelho
 const MESES = ["janeiro", "fevereiro", "março", "abril", "maio", "junho", "julho", "agosto",
@@ -214,21 +206,17 @@ const HUMORES = [
   ["★", "protagonista"], ["☀", "radiante"], ["⚡", "com energia"], ["🎯", "focada"],
   ["☁", "tranquila"], ["🌙", "cansada"], ["🌧", "sensível"],
 ];
-const BLOCO_CUIDADOS = "Cuidados pessoais";
 
 /* ------------------------------ tela ------------------------------ */
 
-let ultimas = [];
-let diaSel = iso(new Date());   // dia que a lista mostra; a faixa da semana troca
+let diaSel = iso(new Date());   // dia aberto na Rotina e nas Tarefas; a faixa da semana troca
 let vista = "hoje";
 let fraseExtra = 0;             // quantas vezes a frase do dia foi trocada
 
 const hojeISO = () => iso(new Date());
-const limiteAntes = () => somaDias(hojeISO(), -DIAS_PARA_TRAS);
-const limiteDepois = () => somaDias(hojeISO(), DIAS_PARA_FRENTE);
+const limiteAntes = () => somaDias(hojeISO(), -DIAS_NAVEGAVEIS);
+const limiteDepois = () => somaDias(hojeISO(), DIAS_NAVEGAVEIS);
 function segundaDe(txt) { const d = deISO(txt); return somaDias(txt, -((d.getDay() + 6) % 7)); }
-function semAcento(t) { return String(t).normalize("NFD").replace(/[̀-ͯ]/g, "").toLowerCase(); }
-const corDe = (bloco) => CORES[bloco] || "cinza";
 
 function mostrarEntrada() {
   $("#app").hidden = true;
@@ -247,78 +235,7 @@ function mostrarPainel() {
   $("#barra").hidden = false;
 }
 
-async function salvarMarca(item) {
-  await banco("tasks?id=eq." + encodeURIComponent(item.id), {
-    metodo: "PATCH", corpo: { status: item.feito ? "concluida" : "pendente" },
-    cabecalhos: { Prefer: "return=minimal" },
-  });
-  gravar(CHAVE_LISTA, { em: Date.now(), itens: ultimas });
-}
-
-function linhaTarefa(item, extra) {
-  const el = criar("div", "tarefa" + (item.feito ? " feita" : ""));
-  el.dataset.id = item.id;
-  const marca = criar("button", "marca");
-  marca.type = "button";
-  marca.setAttribute("aria-pressed", String(item.feito));
-  marca.setAttribute("aria-label", item.titulo);
-  marca.appendChild(criar("span", "marca-check", "✓")).setAttribute("aria-hidden", "true");
-  el.appendChild(marca);
-  const corpo = criar("div", "texto");
-  corpo.appendChild(criar("span", null, item.titulo));
-  if (extra) corpo.appendChild(criar("small", "tarefa-extra", extra));
-  el.appendChild(corpo);
-
-  const pinta = () => {
-    el.classList.toggle("feita", item.feito);
-    marca.setAttribute("aria-pressed", String(item.feito));
-  };
-  el.addEventListener("click", (ev) => {
-    ev.preventDefault();
-    if (Date.now() - deslizouEm < 450) return;   // o toque que encerra um deslize nao conta como marcar
-    if (el.classList.contains("ocupada")) return;
-    el.classList.add("ocupada");
-    item.feito = !item.feito;
-    pinta();
-    if (item.feito) vibrar(12);
-    atualizarResumo();
-    salvarMarca(item).catch(() => {
-      item.feito = !item.feito;
-      pinta();
-      atualizarResumo();
-      aviso(navigator.onLine === false
-        ? "Sem internet: a marcação não foi salva."
-        : "Não consegui salvar. Tente de novo.", true);
-    }).finally(() => el.classList.remove("ocupada"));
-  });
-  return el;
-}
-
-// Lista sem blocos (pendencias, busca, cuidados): cada linha leva a cor do bloco de origem.
-function listaSolta(itens, extra) {
-  const caixa = criar("div", "lista-solta");
-  for (const it of itens) {
-    const linha = linhaTarefa(it, extra ? extra(it) : null);
-    linha.dataset.cor = corDe(it.bloco);
-    caixa.appendChild(linha);
-  }
-  return caixa;
-}
-
-// Conta das pendencias (sino e tela "Ficou para trás") e pontos da semana. Chamado a cada marcacao.
-function atualizarResumo() {
-  const pend = ultimas.filter((t) => t.due_date < hojeISO() && !t.feito).length;
-  const sino = $("#sino-conta");
-  sino.hidden = pend === 0;
-  sino.textContent = pend > 9 ? "9+" : String(pend);
-  $("#sino").setAttribute("aria-label", pend ? "Pendências: " + pend : "Nada para trás");
-  const pr = $("#pendentes-resumo");
-  if (pr) pr.textContent = pend ? pend + (pend === 1 ? " tarefa pendente" : " tarefas pendentes") + " dos últimos " + DIAS_PARA_TRAS + " dias."
-    : "Tudo em dia. Nada ficou para trás.";
-  marcarSemana();
-}
-
-/* ---------- frase do dia e humor ---------- */
+/* ---------- frase do dia e humor (aba Bem-estar) ---------- */
 
 function renderFrase(animar) {
   const base = Math.floor(deISO(hojeISO()) / 86400000);
@@ -358,14 +275,13 @@ function renderHumor() {
       caixa.hidden = true;
       $("#humor").setAttribute("aria-expanded", "false");
       vibrar(10);
-      renderHumor();
       renderBem();
     });
     caixa.appendChild(b);
   }
 }
 
-/* ---------- faixa da semana ---------- */
+/* ---------- faixa da semana (Rotina e Tarefas) ---------- */
 
 let semanaIni = segundaDe(diaSel);
 
@@ -396,12 +312,21 @@ function renderSemana() {
   marcarSemana();
 }
 
-// ponto azul: dia com compromisso fora da rotina
+// Na Rotina, ponto = dia com compromisso. Nas Tarefas, ponto azul = dia com tarefa, verde = tudo feito.
 function marcarSemana() {
   for (const b of document.querySelectorAll("#semana-dias .dia")) {
-    const tem = typeof compromissosDe === "function" && compromissosDe(b.dataset.dia).length > 0;
+    const d = b.dataset.dia;
+    let tem = false, fechado = false;
+    if (vista === "tarefas") {
+      const ts = tarefasDo(d);
+      tem = ts.length > 0;
+      fechado = tem && ts.every((t) => t.feito);
+    } else {
+      tem = compromissosDe(d).length > 0;
+    }
     b.classList.toggle("tem", tem);
-    b.setAttribute("aria-selected", String(b.dataset.dia === diaSel));
+    b.classList.toggle("fechado", fechado);
+    b.setAttribute("aria-selected", String(d === diaSel));
   }
 }
 
@@ -411,90 +336,27 @@ function escolherDia(d) {
   diaSel = d;
   semanaIni = segundaDe(d);
   renderSemana();
-  renderDia();
+  renderVista();
 }
 
 function mudarSemana(n) {
   semanaIni = somaDias(semanaIni, 7 * n);
-  // na semana nova, mostra o mesmo dia da semana (dentro do que o app carrega)
+  // na semana nova, mostra o mesmo dia da semana
   escolherDia(somaDias(diaSel, 7 * n));
 }
 
-/* ---------- rotina do dia (desenhada pelo rotina.js) ---------- */
-
-function renderDia() {
+function renderDiaRotina() {
   const n = diasEntre(hojeISO(), diaSel);
   $("#dia-titulo").textContent = n === 0 ? "Hoje" : n === 1 ? "Amanhã" : n === -1 ? "Ontem"
     : diaSemana(diaSel) + ", " + bonita(diaSel);
-  if (typeof renderRotina === "function") renderRotina();
-  atualizarResumo();
-}
-
-/* ---------- agenda ---------- */
-
-function renderAgenda() {
-  const hoje = hojeISO();
-  const futuras = ultimas.filter((t) => t.due_date > hoje).sort((a, b) => a.due_date.localeCompare(b.due_date));
-
-  // contagem da avaliacao presencial (se estiver na lista)
-  const prova = ultimas.filter((t) => t.due_date >= hoje).find((t) => /avalia[çc][ãa]o presencial/i.test(t.titulo));
-  const cartaoAdp = $("#cartao-adp");
-  if (prova) {
-    const falta = diasEntre(hoje, prova.due_date);
-    cartaoAdp.hidden = false;
-    $("#adp-dias").textContent = falta <= 0 ? "hoje" : String(falta);
-    $("#adp-unidade").textContent = falta <= 0 ? "" : (falta === 1 ? "dia" : "dias");
-    $("#adp-dias").parentElement.classList.toggle("so-texto", falta <= 0);
-    $("#adp-titulo").textContent = prova.titulo;
-    $("#adp-detalhe").textContent = diaSemana(prova.due_date) + ", " + bonita(prova.due_date);
-  } else {
-    cartaoAdp.hidden = true;
-  }
-
-  const lt = $("#linha-tempo");
-  lt.replaceChildren();
-  const porDia = new Map();
-  for (const p of futuras) {
-    if (!porDia.has(p.due_date)) porDia.set(p.due_date, []);
-    porDia.get(p.due_date).push(p);
-  }
-  $("#proximos-vazio").hidden = porDia.size > 0;
-  for (const [dia, itens] of porDia) {
-    const falta = diasEntre(hoje, dia);
-    const li = criar("li");
-    const q = criar("div", "quando" + (falta === 1 ? " agora" : ""));
-    q.appendChild(criar("strong", null, String(deISO(dia).getDate())));
-    q.appendChild(criar("span", null, diaSemana(dia).slice(0, 3)));
-    li.appendChild(q);
-    const corpo = criar("div", "dia-corpo");
-    corpo.appendChild(criar("p", "dia-falta", quandoFalta(falta) + " · " + bonita(dia)));
-    const lista = criar("ul", "lista-dia");
-    for (const it of itens) lista.appendChild(criar("li", it.feito ? "feito" : null, it.titulo));
-    corpo.appendChild(lista);
-    li.appendChild(corpo);
-    li.addEventListener("click", () => { escolherDia(dia); irPara("hoje"); });
-    lt.appendChild(li);
-  }
-}
-
-/* ---------- pendencias ---------- */
-
-function renderPendentes() {
-  const hoje = hojeISO();
-  const atrasadas = ultimas.filter((t) => t.due_date < hoje && !t.feito)
-    .sort((a, b) => b.due_date.localeCompare(a.due_date));
-  const alvo = $("#pendentes");
-  alvo.replaceChildren();
-  if (atrasadas.length) {
-    alvo.appendChild(listaSolta(atrasadas,
-      (t) => quandoFalta(diasEntre(hoje, t.due_date)) + " · " + (t.bloco || "sem bloco")));
-  }
-  atualizarResumo();
+  renderRotina();
 }
 
 /* ---------- bem-estar ---------- */
 
 function renderBem() {
+  renderFrase(false);
+  renderHumor();
   const hoje = hojeISO();
   const hs = humores();
   const sem = $("#humor-semana");
@@ -503,7 +365,7 @@ function renderBem() {
   barras.replaceChildren();
   const dias = [];
   for (let k = 6; k >= 0; k--) dias.push(somaDias(hoje, -k));
-  const maior = Math.max(1, ...dias.map((d) => ultimas.filter((t) => t.due_date === d).length));
+  const maior = Math.max(1, ...dias.map((d) => tarefasDo(d).length));
   for (const d of dias) {
     const achado = HUMORES.find((x) => x[1] === hs[d]);
     const c = criar("div");
@@ -512,7 +374,7 @@ function renderBem() {
     c.appendChild(criar("small", null, d === hoje ? "hoje" : diaSemana(d).slice(0, 3)));
     sem.appendChild(c);
 
-    const itens = ultimas.filter((t) => t.due_date === d);
+    const itens = tarefasDo(d);
     const feitos = itens.filter((t) => t.feito).length;
     const b = criar("div", "barra-dia" + (itens.length && feitos === itens.length ? " cheio" : ""));
     b.appendChild(criar("span", null, itens.length ? feitos + "/" + itens.length : ""));
@@ -522,129 +384,74 @@ function renderBem() {
     b.appendChild(criar("small", null, d === hoje ? "hoje" : diaSemana(d).slice(0, 3)));
     barras.appendChild(b);
   }
-
-  const cuidados = ultimas.filter((t) => t.due_date === hoje && t.bloco === BLOCO_CUIDADOS);
-  const alvo = $("#cuidados");
-  alvo.replaceChildren();
-  if (cuidados.length) alvo.appendChild(listaSolta(cuidados));
-  else alvo.appendChild(criar("p", "secundario", "Nenhum cuidado pessoal na lista de hoje."));
 }
 
-/* ---------- busca ---------- */
+/* ---------- busca (tarefas e notas) ---------- */
 
 function renderBusca() {
   const q = semAcento($("#busca").value.trim());
   const alvo = $("#busca-resultado");
   alvo.replaceChildren();
-  if (!q) { alvo.appendChild(criar("p", "secundario", "Busca nas notas e nas tarefas carregadas: dos últimos 7 dias aos próximos 30.")); return; }
+  if (!q) { alvo.appendChild(criar("p", "secundario", "Busca nas tarefas e nas notas.")); return; }
   const hoje = hojeISO();
-  const achadas = ultimas.filter((t) => semAcento(t.titulo + " " + t.bloco).includes(q))
-    .sort((a, b) => a.due_date.localeCompare(b.due_date));
+  const achadas = vivos(dados.tarefas).filter((t) => semAcento(t.titulo).includes(q))
+    .sort((a, b) => a.data.localeCompare(b.data));
   const notasAchadas = typeof notasQueCasam === "function" ? notasQueCasam(q) : [];
   if (!achadas.length && !notasAchadas.length) { alvo.appendChild(criar("p", "secundario", "Nada encontrado.")); return; }
   if (notasAchadas.length) alvo.appendChild(caixaNotas("Notas", notasAchadas, q));
-  const partes = [["Para trás", achadas.filter((t) => t.due_date < hoje)],
-    ["Hoje", achadas.filter((t) => t.due_date === hoje)],
-    ["Próximos dias", achadas.filter((t) => t.due_date > hoje)]];
-  for (const [rotulo, itens] of partes) {
-    if (!itens.length) continue;
-    alvo.appendChild(criar("p", "grupo-rotulo", rotulo));
-    alvo.appendChild(listaSolta(itens, (t) => (t.due_date === hoje ? "hoje" : diaSemana(t.due_date) + ", " + bonita(t.due_date)) + " · " + (t.bloco || "sem bloco")));
+  if (achadas.length) {
+    alvo.appendChild(criar("p", "grupo-rotulo", "Tarefas"));
+    const caixa = criar("div", "lista-solta");
+    for (const t of achadas) caixa.appendChild(linhaTarefa(t, t.data === hoje ? "hoje" : diaSemana(t.data) + ", " + bonita(t.data)));
+    alvo.appendChild(caixa);
   }
 }
 
 /* ---------- navegacao ---------- */
 
-// quieto: redesenho depois de atualizar a lista, sem rolar a tela nem roubar o foco
+const COM_SEMANA = ["hoje", "tarefas"];
+
+function renderVista() {
+  if (vista === "hoje") renderDiaRotina();
+  if (vista === "tarefas") renderTarefas();
+  if (vista === "bem") renderBem();
+  if (vista === "busca") renderBusca();
+  if (vista === "notas") renderNotas();
+  marcarSemana();
+}
+
+// quieto: redesenho sem rolar a tela nem roubar o foco
 function irPara(nome, quieto) {
   vista = nome;
   for (const v of document.querySelectorAll(".vista")) v.hidden = v.dataset.vista !== nome;
+  $("#semana").hidden = !COM_SEMANA.includes(nome);
   for (const b of document.querySelectorAll("#barra [data-ir]")) {
     if (b.dataset.ir === nome) b.setAttribute("aria-current", "page"); else b.removeAttribute("aria-current");
   }
-  if (nome === "agenda") renderAgenda();
-  if (nome === "pendentes") renderPendentes();
-  if (nome === "bem") renderBem();
-  if (nome === "busca") { renderBusca(); if (!quieto) setTimeout(() => $("#busca").focus(), 50); }
-  if (nome === "hoje") renderDia();
-  if (nome === "notas") renderNotas();
-  const mais = $("#abrir-nova");
-  mais.setAttribute("aria-label", nome === "notas" ? "Nova nota" : "Novo compromisso");
+  renderVista();
+  if (nome === "busca" && !quieto) setTimeout(() => $("#busca").focus(), 50);
+  const rotulos = { hoje: "Novo na rotina", tarefas: "Nova tarefa", notas: "Nova nota" };
+  $("#abrir-nova").setAttribute("aria-label", rotulos[nome] || "Nova tarefa");
   if (!quieto) window.scrollTo({ top: 0 });
 }
 
 function abrirFolha(id) {
   fecharFolhas();
   $(id).hidden = false;
-  const campo = $(id).querySelector("input");
+  const campo = $(id).querySelector("input[type=text]");
   if (campo) setTimeout(() => campo.focus(), 120);
 }
 function fecharFolhas() { for (const f of document.querySelectorAll(".folha")) f.hidden = true; }
 
-function render(dados) {
-  ultimas = dados;
+function abrirApp() {
+  mostrarPainel();
+  $("#menu-conta").textContent = (sessao() && sessao().email) || "";
   const hoje = hojeISO();
   $("#saudacao").textContent = saudacao() + ", Isis";
   $("#data-hoje").textContent = diaSemana(hoje) + ", " + deISO(hoje).getDate() + " de " + MESES[deISO(hoje).getMonth()];
-  if (diaSel < limiteAntes() || diaSel > limiteDepois()) diaSel = hoje;
-  renderFrase(false);
-  renderHumor();
   renderSemana();
   irPara(vista, true);
-}
-
-let carregadoEm = 0;
-let carregando = null;
-
-function mostrarEstado(txt, erro) {
-  const el = $("#atualizado");
-  el.textContent = txt;
-  el.classList.toggle("erro", !!erro);
-}
-
-async function carregar() {
-  if (!sessao()) { mostrarEntrada(); return; }
-  if (carregando) return carregando;
-  const btn = $("#atualizar");
-  btn.classList.add("girando");
-  btn.disabled = true;
-  mostrarPainel();
-  $("#menu-conta").textContent = sessao().email || "";
-  carregando = (async () => {
-    try {
-      const hoje = iso(new Date());
-      const linhas = await banco(
-        "tasks?select=id,title,description,status,due_date" +
-        "&due_date=gte." + somaDias(hoje, -DIAS_PARA_TRAS) +
-        "&due_date=lte." + somaDias(hoje, DIAS_PARA_FRENTE) +
-        "&order=due_date,title");
-      const novas = (linhas || []).map((l) => ({
-        id: l.id, titulo: l.title || "(sem título)", bloco: l.description || "",
-        due_date: l.due_date, feito: l.status === "concluida",
-      })).filter((t) => t.due_date);
-      carregadoEm = Date.now();
-      gravar(CHAVE_LISTA, { em: carregadoEm, itens: novas });
-      render(novas);
-      mostrarEstado("Atualizado às " + hora(new Date()));
-    } catch (err) {
-      if (!sessao()) return;
-      const semRede = navigator.onLine === false || (err && err.name === "TypeError");
-      const guardada = ler(CHAVE_LISTA);
-      if (!ultimas.length && guardada && guardada.itens) render(guardada.itens);
-      if (ultimas.length) {
-        const desde = guardada && guardada.em ? " (lista de " + hora(new Date(guardada.em)) + ")" : "";
-        mostrarEstado((semRede ? "Sem internet" : "Não consegui atualizar") + desde + ". Use o menu para tentar de novo.", true);
-      } else {
-        $("#resumo-texto").textContent = "Não consegui carregar agora.";
-        mostrarEstado("Motivo: " + (semRede ? "sem internet" : (err && err.message) || "desconhecido") +
-          ". Use o menu para tentar de novo.", true);
-      }
-    } finally {
-      setTimeout(() => { btn.classList.remove("girando"); btn.disabled = false; }, 400);
-      carregando = null;
-    }
-  })();
-  return carregando;
+  atualizarSino();
 }
 
 // deslizar para o lado troca o dia (na lista) ou a semana (na faixa)
@@ -672,9 +479,9 @@ $("#form-entrar").addEventListener("submit", async (ev) => {
   try {
     await entrar($("#entrar-email").value.trim(), $("#entrar-senha").value.trim());
     $("#entrar-senha").value = "";
-    if (typeof notasAoEntrar === "function") notasAoEntrar();
-    if (typeof rotinaAoEntrar === "function") rotinaAoEntrar();
-    await carregar();
+    notasAoEntrar();
+    dadosAoEntrar();
+    abrirApp();
   } catch (e) {
     erro.textContent = navigator.onLine === false ? "Sem internet. Conecte e tente de novo." : e.message;
   } finally {
@@ -684,12 +491,18 @@ $("#form-entrar").addEventListener("submit", async (ev) => {
 });
 
 $("#sair").addEventListener("click", sair);
-$("#atualizar").addEventListener("click", () => { carregar().then(() => fecharFolhas()); });
+$("#atualizar").addEventListener("click", async () => {
+  const b = $("#atualizar");
+  b.classList.add("girando");
+  await Promise.all([sincronizarDados(), sincronizarNotas()]);
+  b.classList.remove("girando");
+  fecharFolhas();
+  aviso(modoDados === "local" ? "Sem a tabela no banco: tudo fica neste aparelho." : "Sincronizado.");
+});
 $("#abrir-menu").addEventListener("click", () => abrirFolha("#folha-menu"));
 $("#abrir-busca").addEventListener("click", () => irPara(vista === "busca" ? "hoje" : "busca"));
 $("#busca").addEventListener("input", renderBusca);
-$("#sino").addEventListener("click", () => irPara("pendentes"));
-$("#ir-pendentes").addEventListener("click", () => { fecharFolhas(); irPara("pendentes"); });
+$("#sino").addEventListener("click", () => { escolherDia(hojeISO()); irPara("tarefas"); });
 for (const b of document.querySelectorAll("#barra [data-ir]")) b.addEventListener("click", () => irPara(b.dataset.ir));
 
 $("#afirmacao").addEventListener("click", () => { fraseExtra++; renderFrase(true); });
@@ -704,38 +517,41 @@ $("#semana-depois").addEventListener("click", () => mudarSemana(1));
 $("#semana-hoje").addEventListener("click", () => escolherDia(hojeISO()));
 aoDeslizar($("#semana-dias"), (n) => { if (!$(n < 0 ? "#semana-antes" : "#semana-depois").disabled) mudarSemana(n); });
 aoDeslizar($("#rotina-dia"), (n) => escolherDia(somaDias(diaSel, n)));
+aoDeslizar($("#tarefas-lista"), (n) => escolherDia(somaDias(diaSel, n)));
 
-// "+": compromisso novo no dia aberto (nas Notas, nota nova)
+// "+": o que for da aba aberta
 $("#abrir-nova").addEventListener("click", () => {
   if (vista === "notas") { novaNota(); return; }
-  abrirCompromisso(null, vista === "hoje" ? diaSel : hojeISO());
+  if (vista === "hoje") { abrirFolha("#folha-mais"); return; }
+  if (vista !== "tarefas") irPara("tarefas");
+  $("#tarefa-nova").focus();
 });
 for (const f of document.querySelectorAll(".folha")) {
   f.addEventListener("click", (ev) => { if (ev.target === f || ev.target.closest("[data-fechar]")) fecharFolhas(); });
 }
 document.addEventListener("keydown", (ev) => { if (ev.key === "Escape") fecharFolhas(); });
 
+let abertoEm = iso(new Date());
 document.addEventListener("visibilitychange", () => {
   if (document.visibilityState !== "visible" || !sessao()) return;
-  // virou o dia ou passou um minuto: busca de novo
-  const virouDia = carregadoEm && iso(new Date(carregadoEm)) !== iso(new Date());
-  if (virouDia) { diaSel = hojeISO(); semanaIni = segundaDe(diaSel); fraseExtra = 0; }
-  if (virouDia || Date.now() - carregadoEm > RECARREGA_APOS_MS) carregar();
+  // virou o dia com o app aberto: volta para hoje
+  if (abertoEm !== hojeISO()) {
+    abertoEm = hojeISO();
+    diaSel = abertoEm; semanaIni = segundaDe(diaSel); fraseExtra = 0;
+    abrirApp();
+  }
 });
-window.addEventListener("online", () => { if (sessao()) carregar(); });
 
 for (const el of document.querySelectorAll(".versao")) el.textContent = "versão " + VERSAO;
 
-// Abre na hora com a ultima lista guardada; a busca no banco atualiza logo depois.
-(function partida() {
-  const guardada = sessao() && ler(CHAVE_LISTA);
-  if (guardada && guardada.itens) {
-    mostrarPainel();
-    render(guardada.itens);
-    mostrarEstado("Lista de " + hora(new Date(guardada.em)) + ", atualizando…");
-  }
-  carregar();
-})();
+// Os outros scripts (dados, notas, rotina, tarefas) carregam depois deste; a tela abre quando todos chegaram.
+window.addEventListener("DOMContentLoaded", () => {
+  try { localStorage.removeItem("painel.lista.v1"); } catch (e) {}   // lista antiga do Notion
+  aoMudarDados.push(() => { if (vista === "bem") renderBem(); if (vista === "busca") renderBusca(); });
+  if (!sessao()) { mostrarEntrada(); return; }
+  abrirApp();
+  sincronizarDados();
+});
 
 if ("serviceWorker" in navigator && location.protocol === "https:") {
   navigator.serviceWorker.register("sw.js?v=" + VERSAO).catch(() => {});

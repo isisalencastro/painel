@@ -1,42 +1,20 @@
-// Rotina do dia: blocos fixos com horario (por dia da semana) e compromissos de um dia so.
+// Rotina do dia: blocos fixos com horario e cor (por dia da semana) e compromissos de um dia so.
 // O compromisso manda: o bloco que bate no mesmo horario encolhe naquele dia, ou sai se nao sobrar nada.
-// Guarda primeiro no aparelho e sincroniza com a tabela "routines" do Supabase quando ela existe
-// (SQL em supabase/routines.sql). Sem a tabela, a rotina fica so neste aparelho.
-// Carregado depois do app.js e do notas.js: usa $, criar, ler, gravar, banco, sessao, aviso, vibrar,
-// iso, deISO, somaDias, diaSemana, bonita, hojeISO, diaSel, vista, abrirFolha, fecharFolhas e novoId.
+// A altura de cada bloco na tela segue a duracao (PX_POR_MIN), com um minimo para o texto caber.
+// Os dados moram no dados.js; aqui fica so a tela.
 
-const CHAVE_ROTINA = "painel.rotina.v1:";   // + e-mail da conta
-const SOBRA_MINIMA = 15;                    // pedaco de bloco menor que isso nao aparece
-const GUARDA_COMPROMISSO_DIAS = 60;         // compromisso mais velho que isso sai do aparelho e do banco
-const CORES_BLOCO = ["azul", "verde", "violeta", "ambar", "rosa", "laranja"];
+const SOBRA_MINIMA = 15;        // pedaco de bloco menor que isso nao aparece
+const PX_POR_MIN = 1.1;         // 1 hora = 66px
+const ALTURA_MIN = 46;
+const LIVRE_MAX = 56;           // tempo livre entre blocos aparece, mas sem empurrar o dia para longe
+const PALETA = ["azul", "verde", "violeta", "ambar", "rosa", "coral", "laranja", "turquesa", "vinho", "cinza"];
+const NOMES_COR = { azul: "azul", verde: "verde", violeta: "violeta", ambar: "âmbar", rosa: "rosa", coral: "coral",
+  laranja: "laranja", turquesa: "turquesa", vinho: "vinho", cinza: "cinza" };
 const DIAS_CURTOS = ["dom", "seg", "ter", "qua", "qui", "sex", "sáb"];
 const ORDEM_DIAS = [1, 2, 3, 4, 5, 6, 0];   // a semana na tela comeca na segunda
 
-let rotina = { blocos: [], compromissos: [], atualizada: 0, sujo: false };
-let modoRotina = "?";       // "nuvem", "local" (sem tabela) ou "?"
-let sincronizandoRotina = null;
 let blocoEditado = null;    // bloco aberto na folha (null = novo)
 let compEditado = null;     // compromisso aberto na folha (null = novo)
-
-function chaveRotina() { const s = sessao(); return CHAVE_ROTINA + ((s && s.email) || "").toLowerCase(); }
-function carregarRotinaLocal() {
-  const g = ler(chaveRotina());
-  rotina = { blocos: [], compromissos: [], atualizada: 0, sujo: false };
-  if (g && g.rotina) Object.assign(rotina, g.rotina);
-  modoRotina = (g && g.modo === "nuvem") ? "nuvem" : "?";   // "local" e reavaliado a cada abertura
-}
-function gravarRotina() { gravar(chaveRotina(), { modo: modoRotina, rotina }); }
-
-function mudouRotina() {
-  const corte = somaDias(hojeISO(), -GUARDA_COMPROMISSO_DIAS);
-  rotina.compromissos = rotina.compromissos.filter((c) => c.data >= corte);
-  rotina.atualizada = Date.now();
-  rotina.sujo = true;
-  gravarRotina();
-  renderRotina();
-  if (typeof marcarSemana === "function") marcarSemana();
-  agendarSincroniaRotina();
-}
 
 /* ------------------------------ conta do dia ------------------------------ */
 
@@ -44,14 +22,20 @@ const min = (hhmm) => { const [h, m] = String(hhmm).split(":").map(Number); retu
 const hhmm = (m) => String(Math.floor(m / 60)).padStart(2, "0") + ":" + String(m % 60).padStart(2, "0");
 // bloco que vira a noite (22:30 a 06:30) conta ate a meia-noite no dia dele
 const fimEfetivo = (ini, fim) => (min(fim) > min(ini) ? min(fim) : 24 * 60);
-
-function corDoBloco(titulo) {
-  let h = 0;
-  for (const c of semAcento(titulo)) h = (h * 31 + c.charCodeAt(0)) >>> 0;
-  return CORES_BLOCO[h % CORES_BLOCO.length];
+function duracao(m) {
+  const h = Math.floor(m / 60), r = m % 60;
+  return h ? h + "h" + (r ? String(r).padStart(2, "0") : "") : r + " min";
 }
 
-function compromissosDe(dia) { return rotina.compromissos.filter((c) => c.data === dia); }
+// cor que a pessoa escolheu; bloco antigo sem cor ganha uma fixa pelo nome
+function corDoBloco(b) {
+  if (b.cor && PALETA.includes(b.cor)) return b.cor;
+  let h = 0;
+  for (const c of semAcento(b.titulo)) h = (h * 31 + c.charCodeAt(0)) >>> 0;
+  return PALETA[h % 8];
+}
+
+function compromissosDe(dia) { return vivos(dados.compromissos).filter((c) => c.data === dia); }
 
 // Tira de [ini, fim) os intervalos ocupados e devolve o que sobra.
 function recortar(ini, fim, ocupados) {
@@ -75,18 +59,19 @@ function agendaDo(dia) {
   const ocupados = comps.map((c) => [min(c.ini), fimEfetivo(c.ini, c.fim)]);
   const itens = [];
   const foraHoje = [];
-  for (const b of rotina.blocos.filter((x) => x.dias.includes(semana))) {
+  for (const b of vivos(dados.blocos).filter((x) => x.dias.includes(semana))) {
     const ini = min(b.ini), fim = fimEfetivo(b.ini, b.fim);
     const pedacos = recortar(ini, fim, ocupados);
     if (!pedacos.length) { foraHoje.push(b); continue; }
     const mexeu = pedacos.length !== 1 || pedacos[0][0] !== ini || pedacos[0][1] !== fim;
     for (const [x, y] of pedacos) {
-      itens.push({ tipo: "bloco", ref: b, titulo: b.titulo, ini: x, fim: y,
+      itens.push({ tipo: "bloco", ref: b, titulo: b.titulo, cor: corDoBloco(b), ini: x, fim: y,
         rotuloFim: y === fim ? b.fim : hhmm(y), ajustado: mexeu });
     }
   }
   for (const c of comps) {
-    itens.push({ tipo: "comp", ref: c, titulo: c.titulo, ini: min(c.ini), fim: fimEfetivo(c.ini, c.fim), rotuloFim: c.fim });
+    itens.push({ tipo: "comp", ref: c, titulo: c.titulo, cor: c.cor || "coral",
+      ini: min(c.ini), fim: fimEfetivo(c.ini, c.fim), rotuloFim: c.fim });
   }
   itens.sort((a, b) => a.ini - b.ini || (a.tipo === "comp" ? -1 : 1));
   return { itens, foraHoje, comps };
@@ -97,28 +82,33 @@ function agendaDo(dia) {
 function linhaAgenda(it, agoraMin) {
   const el = criar("button", "rot-item" + (it.tipo === "comp" ? " rot-comp" : ""));
   el.type = "button";
-  el.dataset.cor = it.tipo === "comp" ? "coral" : corDoBloco(it.titulo);
+  el.dataset.cor = it.cor;
+  el.style.height = Math.max(ALTURA_MIN, Math.round((it.fim - it.ini) * PX_POR_MIN)) + "px";
   if (agoraMin !== null) {
     if (agoraMin >= it.fim) el.classList.add("passou");
     else if (agoraMin >= it.ini) el.classList.add("agora");
   }
-  const h = criar("div", "rot-hora");
-  h.appendChild(criar("strong", null, hhmm(it.ini)));
-  h.appendChild(criar("small", null, it.rotuloFim));
-  el.appendChild(h);
-  const c = criar("div", "rot-cartao");
+  el.appendChild(criar("span", "rot-hora", hhmm(it.ini)));
+  const c = criar("span", "rot-cartao");
   c.appendChild(criar("span", "rot-titulo", it.titulo));
-  let sub = "";
-  if (it.tipo === "comp") sub = "compromisso";
-  else if (it.ajustado) sub = "ajustado hoje (o normal é " + it.ref.ini + " às " + it.ref.fim + ")";
-  if (el.classList.contains("agora")) sub = "agora" + (sub ? " · " + sub : "");
-  if (sub) c.appendChild(criar("small", "rot-sub", sub));
+  let sub = hhmm(it.ini) + "–" + it.rotuloFim + " · " + duracao(it.fim - it.ini);
+  if (it.tipo === "comp") sub += " · compromisso";
+  else if (it.ajustado) sub += " · ajustado (o normal é " + it.ref.ini + "–" + it.ref.fim + ")";
+  if (el.classList.contains("agora")) sub = "agora · " + sub;
+  c.appendChild(criar("small", "rot-sub", sub));
   el.appendChild(c);
-  el.setAttribute("aria-label", hhmm(it.ini) + " a " + it.rotuloFim + ", " + it.titulo + (sub ? ", " + sub : ""));
+  el.setAttribute("aria-label", it.titulo + ", " + sub);
   el.addEventListener("click", () => {
     if (Date.now() - deslizouEm < 450) return;
     if (it.tipo === "comp") abrirCompromisso(it.ref); else abrirBloco(it.ref);
   });
+  return el;
+}
+
+function espacoLivre(minutos) {
+  const el = criar("div", "rot-livre");
+  el.style.height = Math.min(LIVRE_MAX, Math.round(minutos * PX_POR_MIN)) + "px";
+  if (minutos >= 30) el.appendChild(criar("span", null, "livre · " + duracao(minutos)));
   return el;
 }
 
@@ -130,8 +120,9 @@ function renderRotina() {
   const { itens, foraHoje, comps } = agendaDo(diaSel);
   const agora = new Date();
   const agoraMin = diaSel === hoje ? agora.getHours() * 60 + agora.getMinutes() : null;
+  const temBlocos = vivos(dados.blocos).length > 0;
 
-  if (!rotina.blocos.length && !comps.length) {
+  if (!temBlocos && !comps.length) {
     const v = criar("div", "vazio");
     v.appendChild(criar("p", null, "Sua rotina ainda está vazia."));
     const b = criar("button", "botao", "Montar minha rotina");
@@ -145,17 +136,21 @@ function renderRotina() {
     alvo.appendChild(v);
   } else {
     const lista = criar("div", "rot-lista");
-    for (const it of itens) lista.appendChild(linhaAgenda(it, agoraMin));
+    let fimAnterior = null;
+    for (const it of itens) {
+      if (fimAnterior !== null && it.ini > fimAnterior) lista.appendChild(espacoLivre(it.ini - fimAnterior));
+      lista.appendChild(linhaAgenda(it, agoraMin));
+      fimAnterior = Math.max(fimAnterior || 0, it.fim);
+    }
     alvo.appendChild(lista);
   }
   if (foraHoje.length) {
-    const p = criar("p", "rot-fora");
-    p.textContent = "Fica de fora neste dia: " + foraHoje.map((b) => b.titulo + " (" + b.ini + " às " + b.fim + ")").join(", ") + ".";
-    alvo.appendChild(p);
+    alvo.appendChild(criar("p", "rot-fora",
+      "Fica de fora neste dia: " + foraHoje.map((b) => b.titulo + " (" + b.ini + "–" + b.fim + ")").join(", ") + "."));
   }
 
   let resumo;
-  if (!rotina.blocos.length && !comps.length) resumo = "Monte os blocos fixos do seu dia.";
+  if (!temBlocos && !comps.length) resumo = "Monte os blocos fixos do seu dia.";
   else if (agoraMin !== null) {
     const atual = itens.find((it) => agoraMin >= it.ini && agoraMin < it.fim);
     const proximo = itens.find((it) => it.ini > agoraMin);
@@ -165,9 +160,30 @@ function renderRotina() {
     resumo = n + (n === 1 ? " bloco da rotina." : " blocos da rotina.");
   }
   if (comps.length) resumo += " " + comps.length + (comps.length === 1 ? " compromisso" : " compromissos") + " no dia.";
-  $("#resumo-texto").textContent = resumo;
-  const modo = $("#rotina-modo");
-  if (modo) modo.textContent = modoRotina === "local" ? "Só neste aparelho: a tabela da rotina ainda não existe no banco." : "";
+  $("#rotina-resumo").textContent = resumo;
+}
+
+/* ------------------------------ escolha de cor ------------------------------ */
+
+function montarCores(caixa) {
+  for (const cor of PALETA) {
+    const b = criar("button", "cor-bolinha");
+    b.type = "button";
+    b.dataset.cor = cor;
+    b.setAttribute("aria-label", NOMES_COR[cor]);
+    b.setAttribute("aria-pressed", "false");
+    b.addEventListener("click", () => pintarCores(caixa, cor));
+    caixa.appendChild(b);
+  }
+}
+function pintarCores(caixa, cor) {
+  for (const b of caixa.querySelectorAll("button")) b.setAttribute("aria-pressed", String(b.dataset.cor === cor));
+}
+const corEscolhida = (caixa) => { const b = caixa.querySelector("button[aria-pressed='true']"); return b ? b.dataset.cor : PALETA[0]; };
+// cor para bloco novo: a primeira que ainda nao esta em uso
+function corLivre() {
+  const usadas = new Set(vivos(dados.blocos).map(corDoBloco));
+  return PALETA.find((c) => !usadas.has(c)) || PALETA[0];
 }
 
 /* ------------------------------ folha: compromisso ------------------------------ */
@@ -179,6 +195,7 @@ function abrirCompromisso(c, dia) {
   $("#comp-dia").value = c ? c.data : (dia || diaSel);
   $("#comp-ini").value = c ? c.ini : "";
   $("#comp-fim").value = c ? c.fim : "";
+  pintarCores($("#comp-cores"), c ? (c.cor || "coral") : "coral");
   $("#comp-apagar").hidden = !c;
   $("#comp-erro").textContent = "";
   abrirFolha("#folha-comp");
@@ -188,25 +205,26 @@ function salvarCompromisso() {
   const titulo = $("#comp-texto").value.trim();
   const data = $("#comp-dia").value;
   const ini = $("#comp-ini").value, fim = $("#comp-fim").value;
+  const cor = corEscolhida($("#comp-cores"));
   const erro = $("#comp-erro");
   if (!titulo) { erro.textContent = "Diga o que é o compromisso."; $("#comp-texto").focus(); return; }
   if (!data || !ini || !fim) { erro.textContent = "Preencha o dia e os dois horários."; return; }
   if (min(fim) <= min(ini)) { erro.textContent = "O fim precisa ser depois do início."; return; }
-  if (compEditado) Object.assign(compEditado, { titulo, data, ini, fim });
-  else rotina.compromissos.push({ id: novoId(), titulo, data, ini, fim });
+  let c = compEditado;
+  if (c) Object.assign(c, { titulo, data, ini, fim, cor });
+  else { c = { id: novoId(), titulo, data, ini, fim, cor }; dados.compromissos.push(c); }
   fecharFolhas();
   vibrar(10);
-  mudouRotina();
+  mudouDados(c);
   if (data !== diaSel) aviso("Guardado para " + diaSemana(data) + ", " + bonita(data) + ".");
 }
 
 function apagarCompromisso() {
   const c = compEditado;
   if (!c) return;
-  rotina.compromissos = rotina.compromissos.filter((x) => x !== c);
   fecharFolhas();
-  mudouRotina();
-  aviso("Compromisso apagado.", false, { rotulo: "Desfazer", fazer: () => { rotina.compromissos.push(c); mudouRotina(); } });
+  apagarItem(c);
+  aviso("Compromisso apagado.", false, { rotulo: "Desfazer", fazer: () => desfazerApagar(c) });
 }
 
 /* ------------------------------ folha: rotina fixa ------------------------------ */
@@ -222,12 +240,12 @@ function textoDias(dias) {
 function abrirRotina() {
   const alvo = $("#rotina-blocos");
   alvo.replaceChildren();
-  const blocos = rotina.blocos.slice().sort((a, b) => min(a.ini) - min(b.ini));
+  const blocos = vivos(dados.blocos).sort((a, b) => min(a.ini) - min(b.ini));
   if (!blocos.length) alvo.appendChild(criar("p", "secundario", "Nenhum bloco ainda. Comece pelo que você faz quase todo dia: acordar, trabalho, almoço, dormir."));
   for (const b of blocos) {
     const linha = criar("button", "rot-linha");
     linha.type = "button";
-    linha.dataset.cor = corDoBloco(b.titulo);
+    linha.dataset.cor = corDoBloco(b);
     linha.appendChild(criar("strong", null, b.ini + "–" + b.fim));
     linha.appendChild(criar("span", null, b.titulo));
     linha.appendChild(criar("small", null, textoDias(b.dias)));
@@ -252,6 +270,7 @@ function abrirBloco(b) {
   $("#bloco-ini").value = b ? b.ini : "";
   $("#bloco-fim").value = b ? b.fim : "";
   pintarDias(b ? b.dias : [0, 1, 2, 3, 4, 5, 6]);
+  pintarCores($("#bloco-cores"), b ? corDoBloco(b) : corLivre());
   $("#bloco-apagar").hidden = !b;
   $("#bloco-erro").textContent = "";
   abrirFolha("#folha-bloco");
@@ -261,82 +280,29 @@ function salvarBloco() {
   const titulo = $("#bloco-texto").value.trim();
   const ini = $("#bloco-ini").value, fim = $("#bloco-fim").value;
   const dias = diasMarcados();
+  const cor = corEscolhida($("#bloco-cores"));
   const erro = $("#bloco-erro");
   if (!titulo) { erro.textContent = "Dê um nome ao bloco."; $("#bloco-texto").focus(); return; }
   if (!ini || !fim) { erro.textContent = "Preencha os dois horários."; return; }
   if (ini === fim) { erro.textContent = "Início e fim não podem ser iguais."; return; }
   if (!dias.length) { erro.textContent = "Escolha pelo menos um dia."; return; }
-  if (blocoEditado) Object.assign(blocoEditado, { titulo, ini, fim, dias });
-  else rotina.blocos.push({ id: novoId(), titulo, ini, fim, dias });
+  let b = blocoEditado;
+  if (b) Object.assign(b, { titulo, ini, fim, dias, cor });
+  else { b = { id: novoId(), titulo, ini, fim, dias, cor }; dados.blocos.push(b); }
   vibrar(10);
-  mudouRotina();
+  mudouDados(b);
   abrirRotina();
 }
 
 function apagarBloco() {
   const b = blocoEditado;
   if (!b) return;
-  rotina.blocos = rotina.blocos.filter((x) => x !== b);
-  mudouRotina();
+  apagarItem(b);
   abrirRotina();
-  aviso("Bloco apagado.", false, { rotulo: "Desfazer", fazer: () => { rotina.blocos.push(b); mudouRotina(); } });
-}
-
-/* ------------------------------ sincronia ------------------------------ */
-
-let sincronizarRotinaT = null;
-function agendarSincroniaRotina(ms) {
-  if (modoRotina === "local") return;
-  clearTimeout(sincronizarRotinaT);
-  sincronizarRotinaT = setTimeout(sincronizarRotina, ms === undefined ? 1200 : ms);
-}
-
-async function sincronizarRotina() {
-  if (!sessao() || modoRotina === "local") return;
-  if (sincronizandoRotina) return sincronizandoRotina;
-  sincronizandoRotina = (async () => {
-    try {
-      const linhas = await banco("routines?select=data,updated_at");
-      modoRotina = "nuvem";
-      const r = linhas && linhas[0];
-      const quando = r ? Date.parse(r.updated_at) : 0;
-      if (r && quando > rotina.atualizada) {
-        // a versao do banco e mais nova (editada em outro aparelho): ela vale
-        const d = r.data || {};
-        rotina.blocos = Array.isArray(d.blocos) ? d.blocos : [];
-        rotina.compromissos = Array.isArray(d.compromissos) ? d.compromissos : [];
-        rotina.atualizada = quando;
-        rotina.sujo = false;
-      } else if (rotina.sujo) {
-        const em = rotina.atualizada;
-        await banco("routines?on_conflict=user_id", {
-          metodo: "POST",
-          corpo: { data: { blocos: rotina.blocos, compromissos: rotina.compromissos }, updated_at: new Date(em).toISOString() },
-          cabecalhos: { Prefer: "resolution=merge-duplicates,return=minimal" },
-        });
-        if (rotina.atualizada === em) rotina.sujo = false;   // mudou enquanto subia: sobe de novo depois
-        else agendarSincroniaRotina();
-      }
-    } catch (e) {
-      if (e && e.status === 404) modoRotina = "local";   // tabela ainda nao criada
-    } finally {
-      gravarRotina();
-      sincronizandoRotina = null;
-      if (vista === "hoje") renderRotina();
-      if (typeof marcarSemana === "function") marcarSemana();
-    }
-  })();
-  return sincronizandoRotina;
+  aviso("Bloco apagado.", false, { rotulo: "Desfazer", fazer: () => { desfazerApagar(b); abrirRotina(); } });
 }
 
 /* ------------------------------ ligacoes ------------------------------ */
-
-function rotinaAoEntrar() { carregarRotinaLocal(); renderRotina(); sincronizarRotina(); }
-function limparRotinaDaTela() {
-  if (!rotina.sujo) apagar(chaveRotina());   // o que so existe aqui fica guardado
-  rotina = { blocos: [], compromissos: [], atualizada: 0, sujo: false };
-  modoRotina = "?";
-}
 
 (function iniciarRotina() {
   const dias = $("#bloco-dias");
@@ -348,6 +314,8 @@ function limparRotinaDaTela() {
     b.addEventListener("click", () => b.setAttribute("aria-pressed", String(b.getAttribute("aria-pressed") !== "true")));
     dias.appendChild(b);
   }
+  montarCores($("#bloco-cores"));
+  montarCores($("#comp-cores"));
   $("#editar-rotina").addEventListener("click", abrirRotina);
   $("#rotina-novo-bloco").addEventListener("click", () => abrirBloco(null));
   $("#bloco-salvar").addEventListener("click", salvarBloco);
@@ -355,13 +323,10 @@ function limparRotinaDaTela() {
   $("#bloco-voltar").addEventListener("click", abrirRotina);
   $("#comp-salvar").addEventListener("click", salvarCompromisso);
   $("#comp-apagar").addEventListener("click", apagarCompromisso);
-
-  if (sessao()) { carregarRotinaLocal(); renderRotina(); sincronizarRotina(); }
+  $("#mais-comp").addEventListener("click", () => abrirCompromisso(null, diaSel));
+  $("#mais-bloco").addEventListener("click", () => abrirBloco(null));
+  aoMudarDados.push(() => { if (vista === "hoje") renderRotina(); });
 
   // o destaque de "agora" anda sozinho com o relogio
   setInterval(() => { if (vista === "hoje" && diaSel === hojeISO() && !document.hidden) renderRotina(); }, 60 * 1000);
-  document.addEventListener("visibilitychange", () => {
-    if (document.visibilityState === "visible" && sessao()) { renderRotina(); sincronizarRotina(); }
-  });
-  window.addEventListener("online", () => { if (sessao()) sincronizarRotina(); });
 })();
