@@ -1,7 +1,7 @@
 // Rotina do dia: blocos fixos com horario (por dia da semana) e compromissos de um dia so.
 // O compromisso manda: o bloco que bate no mesmo horario encolhe naquele dia, ou sai se nao sobrar nada.
-// Guarda primeiro no aparelho e sincroniza com a tabela "routines" do Supabase quando ela existe
-// (SQL em supabase/routines.sql). Sem a tabela, a rotina fica so neste aparelho.
+// Guarda primeiro no aparelho e sincroniza com a tabela "painel_rotina" do Supabase quando ela existe
+// (SQL em supabase/painel_rotina.sql). Sem a tabela, a rotina fica so neste aparelho.
 // Carregado depois do app.js e do notas.js: usa $, criar, ler, gravar, banco, sessao, aviso, vibrar,
 // iso, deISO, somaDias, diaSemana, bonita, hojeISO, diaSel, vista, abrirFolha, fecharFolhas e novoId.
 
@@ -296,7 +296,7 @@ async function sincronizarRotina() {
   if (sincronizandoRotina) return sincronizandoRotina;
   sincronizandoRotina = (async () => {
     try {
-      const linhas = await banco("routines?select=data,updated_at");
+      const linhas = await banco("painel_rotina?select=data,updated_at");
       modoRotina = "nuvem";
       const r = linhas && linhas[0];
       const quando = r ? Date.parse(r.updated_at) : 0;
@@ -309,7 +309,7 @@ async function sincronizarRotina() {
         rotina.sujo = false;
       } else if (rotina.sujo) {
         const em = rotina.atualizada;
-        await banco("routines?on_conflict=user_id", {
+        await banco("painel_rotina?on_conflict=user_id", {
           metodo: "POST",
           corpo: { data: { blocos: rotina.blocos, compromissos: rotina.compromissos }, updated_at: new Date(em).toISOString() },
           cabecalhos: { Prefer: "resolution=merge-duplicates,return=minimal" },

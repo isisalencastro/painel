@@ -57,9 +57,9 @@ Código em `rotina.js`. Dois tipos de item:
   das 14h às 16h faz o bloco das 14h às 18h virar 16h às 18h) e, se não sobrar pelo menos 15 minutos, sai do dia e
   aparece em "Fica de fora neste dia". A rotina fixa não muda.
 - No dia de hoje, o bloco da hora fica em destaque ("agora") e os que passaram ficam apagados; o destaque anda sozinho.
-- Guarda primeiro no aparelho (`painel.rotina.v1:<e-mail>`) e sincroniza com a tabela `routines` do Supabase (uma
+- Guarda primeiro no aparelho (`painel.rotina.v1:<e-mail>`) e sincroniza com a tabela `painel_rotina` do Supabase (uma
   linha por conta, JSON inteiro, vale a versão mais nova). **A tabela precisa ser criada uma vez** com
-  `supabase/routines.sql`. Sem ela, o app avisa "Só neste aparelho". Compromisso com mais de 60 dias sai sozinho.
+  `supabase/painel_rotina.sql` (o projeto já tem uma `routines` do app antigo, que não se mexe). Sem ela, o app avisa "Só neste aparelho". Compromisso com mais de 60 dias sai sozinho.
 
 ## Notas (desde 05/10/2026)
 
