@@ -4,19 +4,13 @@ const CFG = {
   url: "https://xpkycwxzvhtaylwferiu.supabase.co",
   chave: "sb_publishable_SDGO156OgN9m5HrqcnLeAQ_fcnYctqU",
 };
-const VERSAO = "202610052300";
+const VERSAO = "202610071200";
 const CHAVE_SESSAO = "painel.sessao.v1";
 const CHAVE_LISTA = "painel.lista.v1";      // ultima lista boa, para abrir na hora e sem internet
 const DIAS_PARA_TRAS = 7;                   // pendencias atrasadas que ainda aparecem
 const DIAS_PARA_FRENTE = 30;
 const RECARREGA_APOS_MS = 60 * 1000;        // voltar ao app recarrega, mas nao a cada toque
-const R = 52;
-const VOLTA = 2 * Math.PI * R;
-
-// ordem em que os blocos aparecem na tela
-const ORDEM = ["Diárias da casa", "Cuidados pessoais", "Semanais", "Mensais",
-  "Vídeos da semana", "Estudos", "Conteúdo do dia"];
-// cor de cada bloco na tela (o tom fica no style.css); bloco novo cai no cinza
+// cor de cada bloco de tarefas na tela (o tom fica no style.css); bloco novo cai no cinza
 const CORES = {
   "Diárias da casa": "azul", "Cuidados pessoais": "rosa", "Semanais": "verde", "Mensais": "ambar",
   "Vídeos da semana": "coral", "Estudos": "violeta", "Conteúdo do dia": "laranja",
@@ -59,6 +53,7 @@ function guardarSessao(s) {
 function sair() {
   const s = sessao();
   if (typeof limparNotasDaTela === "function") limparNotasDaTela();
+  if (typeof limparRotinaDaTela === "function") limparRotinaDaTela();
   // revoga a sessao no servidor tambem: quem copiar o token do aparelho nao entra mais
   if (s && s.access_token) {
     fetch(CFG.url + "/auth/v1/logout", {
@@ -206,7 +201,6 @@ function quandoFalta(n) {
 }
 
 const CHAVE_HUMOR = "painel.humor.v1";       // humor por dia, so neste aparelho
-const CHAVE_ESCONDER = "painel.esconder.v1"; // esconder as feitas
 const MESES = ["janeiro", "fevereiro", "março", "abril", "maio", "junho", "julho", "agosto",
   "setembro", "outubro", "novembro", "dezembro"];
 const AFIRMACOES = [
@@ -300,22 +294,6 @@ function linhaTarefa(item, extra) {
   return el;
 }
 
-// Um bloco do dia: na esquerda a conta (3/5), na direita o cartao com cabecalho e checklist.
-// Bloco de uma tarefa so vira cartao simples com faixa lateral, como um compromisso.
-function blocoDe(nome, itens) {
-  const solo = itens.length === 1;
-  const bloco = criar("section", "grupo" + (solo ? " solo" : ""));
-  bloco.dataset.cor = corDe(nome);
-  bloco.appendChild(criar("div", "grupo-conta"));
-  const cartao = criar("div", "grupo-cartao");
-  if (!solo) cartao.appendChild(criar("h3", "grupo-topo", nome));
-  const lista = criar("div", "grupo-lista");
-  for (const it of itens) lista.appendChild(linhaTarefa(it, solo ? nome : null));
-  cartao.appendChild(lista);
-  bloco.appendChild(cartao);
-  return bloco;
-}
-
 // Lista sem blocos (pendencias, busca, cuidados): cada linha leva a cor do bloco de origem.
 function listaSolta(itens, extra) {
   const caixa = criar("div", "lista-solta");
@@ -327,40 +305,8 @@ function listaSolta(itens, extra) {
   return caixa;
 }
 
-function textoResumo(total, feitos, dia) {
-  const futuro = dia > hojeISO();
-  if (total === 0) return futuro ? "Nada marcado para esse dia." : "Nada pendente.";
-  if (feitos === total) return "Tudo feito. 🎉";
-  if (feitos) return "Faltam " + (total - feitos) + " de " + total + ".";
-  return total + (total === 1 ? " tarefa" : " tarefas") + (futuro ? " marcadas." : " para fazer.");
-}
-
-let estavaCompleto = null;
-
-// Recalcula contas e marcas sem redesenhar a lista (chamado a cada toque).
+// Conta das pendencias (sino e tela "Ficou para trás") e pontos da semana. Chamado a cada marcacao.
 function atualizarResumo() {
-  const doDia = ultimas.filter((t) => t.due_date === diaSel);
-  const total = doDia.length;
-  const feitos = doDia.filter((t) => t.feito).length;
-  const pct = total ? Math.round((feitos / total) * 100) : 0;
-  const anel = $("#anel-valor");
-  anel.style.strokeDasharray = VOLTA.toFixed(1);
-  anel.style.strokeDashoffset = (VOLTA * (1 - pct / 100)).toFixed(1);
-  $("#pct").textContent = pct + "%";
-  $("#resumo-texto").textContent = textoResumo(total, feitos, diaSel);
-
-  const completo = total > 0 && feitos === total;
-  $(".dia-topo").classList.toggle("completo", completo);
-  if (completo && estavaCompleto === false) { festejar(); vibrar([18, 60, 18]); }
-  estavaCompleto = completo;
-
-  for (const g of $("#grupos").querySelectorAll(".grupo")) {
-    const linhas = g.querySelectorAll(".tarefa").length;
-    const f = g.querySelectorAll(".tarefa.feita").length;
-    g.querySelector(".grupo-conta").textContent = f + "/" + linhas;
-    g.classList.toggle("grupo-completo", linhas > 0 && f === linhas);
-  }
-
   const pend = ultimas.filter((t) => t.due_date < hojeISO() && !t.feito).length;
   const sino = $("#sino-conta");
   sino.hidden = pend === 0;
@@ -370,23 +316,6 @@ function atualizarResumo() {
   if (pr) pr.textContent = pend ? pend + (pend === 1 ? " tarefa pendente" : " tarefas pendentes") + " dos últimos " + DIAS_PARA_TRAS + " dias."
     : "Tudo em dia. Nada ficou para trás.";
   marcarSemana();
-}
-
-// Confete curto quando o dia fecha. Quem pediu menos movimento nao ve.
-function festejar() {
-  if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
-  const anel = $(".anel");
-  const cores = ["#2f6fd6", "#5b9cf0", "#2a9d7c", "#ffffff"];
-  for (let i = 0; i < 18; i++) {
-    const p = criar("i", "confete");
-    const ang = (i / 18) * Math.PI * 2;
-    const dist = 30 + Math.random() * 26;
-    p.style.setProperty("--x", (Math.cos(ang) * dist).toFixed(1) + "px");
-    p.style.setProperty("--y", (Math.sin(ang) * dist).toFixed(1) + "px");
-    p.style.background = cores[i % cores.length];
-    anel.appendChild(p);
-    setTimeout(() => p.remove(), 900);
-  }
 }
 
 /* ---------- frase do dia e humor ---------- */
@@ -467,12 +396,11 @@ function renderSemana() {
   marcarSemana();
 }
 
-// ponto azul: dia com tarefa; ponto verde: dia todo feito
+// ponto azul: dia com compromisso fora da rotina
 function marcarSemana() {
   for (const b of document.querySelectorAll("#semana-dias .dia")) {
-    const itens = ultimas.filter((t) => t.due_date === b.dataset.dia);
-    b.classList.toggle("tem", itens.length > 0);
-    b.classList.toggle("fechado", itens.length > 0 && itens.every((t) => t.feito));
+    const tem = typeof compromissosDe === "function" && compromissosDe(b.dataset.dia).length > 0;
+    b.classList.toggle("tem", tem);
     b.setAttribute("aria-selected", String(b.dataset.dia === diaSel));
   }
 }
@@ -492,36 +420,13 @@ function mudarSemana(n) {
   escolherDia(somaDias(diaSel, 7 * n));
 }
 
-/* ---------- lista do dia ---------- */
+/* ---------- rotina do dia (desenhada pelo rotina.js) ---------- */
 
 function renderDia() {
-  const hoje = hojeISO();
-  const n = diasEntre(hoje, diaSel);
+  const n = diasEntre(hojeISO(), diaSel);
   $("#dia-titulo").textContent = n === 0 ? "Hoje" : n === 1 ? "Amanhã" : n === -1 ? "Ontem"
     : diaSemana(diaSel) + ", " + bonita(diaSel);
-
-  const alvo = $("#grupos");
-  alvo.replaceChildren();
-  const blocos = new Map();
-  for (const t of ultimas.filter((x) => x.due_date === diaSel)) {
-    const b = t.bloco || "Sem bloco";
-    if (!blocos.has(b)) blocos.set(b, []);
-    blocos.get(b).push(t);
-  }
-  const nomes = [...blocos.keys()].sort((a, b) => {
-    const ia = ORDEM.indexOf(a), ib = ORDEM.indexOf(b);
-    return (ia < 0 ? 99 : ia) - (ib < 0 ? 99 : ib) || a.localeCompare(b);
-  });
-  for (const nome of nomes) {
-    const itens = blocos.get(nome).slice().sort((a, b) => a.feito - b.feito);
-    alvo.appendChild(blocoDe(nome, itens));
-  }
-  if (!nomes.length) {
-    const vazio = criar("div", "vazio");
-    vazio.appendChild(criar("p", null, diaSel > hoje ? "Nada marcado para esse dia." : "Nada na lista desse dia."));
-    alvo.appendChild(vazio);
-  }
-  estavaCompleto = null;   // trocar de dia nao festeja; so a marcacao feita agora
+  if (typeof renderRotina === "function") renderRotina();
   atualizarResumo();
 }
 
@@ -664,7 +569,7 @@ function irPara(nome, quieto) {
   if (nome === "hoje") renderDia();
   if (nome === "notas") renderNotas();
   const mais = $("#abrir-nova");
-  mais.setAttribute("aria-label", nome === "notas" ? "Nova nota" : "Nova tarefa");
+  mais.setAttribute("aria-label", nome === "notas" ? "Nova nota" : "Novo compromisso");
   if (!quieto) window.scrollTo({ top: 0 });
 }
 
@@ -768,6 +673,7 @@ $("#form-entrar").addEventListener("submit", async (ev) => {
     await entrar($("#entrar-email").value.trim(), $("#entrar-senha").value.trim());
     $("#entrar-senha").value = "";
     if (typeof notasAoEntrar === "function") notasAoEntrar();
+    if (typeof rotinaAoEntrar === "function") rotinaAoEntrar();
     await carregar();
   } catch (e) {
     erro.textContent = navigator.onLine === false ? "Sem internet. Conecte e tente de novo." : e.message;
@@ -797,36 +703,12 @@ $("#semana-antes").addEventListener("click", () => mudarSemana(-1));
 $("#semana-depois").addEventListener("click", () => mudarSemana(1));
 $("#semana-hoje").addEventListener("click", () => escolherDia(hojeISO()));
 aoDeslizar($("#semana-dias"), (n) => { if (!$(n < 0 ? "#semana-antes" : "#semana-depois").disabled) mudarSemana(n); });
-aoDeslizar($("#grupos"), (n) => escolherDia(somaDias(diaSel, n)));
+aoDeslizar($("#rotina-dia"), (n) => escolherDia(somaDias(diaSel, n)));
 
-function aplicarEsconder(sim) {
-  $("#grupos").classList.toggle("esconde-feitas", sim);
-  $("#esconder-feitas").setAttribute("aria-pressed", String(sim));
-  $("#esconder-feitas").setAttribute("aria-label", sim ? "Mostrar as feitas" : "Esconder as feitas");
-}
-aplicarEsconder(!!ler(CHAVE_ESCONDER));
-$("#esconder-feitas").addEventListener("click", () => {
-  const sim = !ler(CHAVE_ESCONDER);
-  gravar(CHAVE_ESCONDER, sim);
-  aplicarEsconder(sim);
-});
-
-// "+": a lista nasce no Notion, entao a tarefa nova vai pelo agente pessoal (texto copiado e conversa aberta)
+// "+": compromisso novo no dia aberto (nas Notas, nota nova)
 $("#abrir-nova").addEventListener("click", () => {
   if (vista === "notas") { novaNota(); return; }
-  $("#nova-dia").value = diaSel;
-  abrirFolha("#folha-nova");
-});
-$("#nova-enviar").addEventListener("click", async () => {
-  const texto = $("#nova-texto").value.trim();
-  if (!texto) { $("#nova-texto").focus(); return; }
-  const dia = $("#nova-dia").value || hojeISO();
-  const msg = "Adicionar na Casa: " + texto + " (" + diaSemana(dia) + ", " + bonita(dia) + ")";
-  try { await navigator.clipboard.writeText(msg); aviso("Copiado. Cole na conversa com o agente."); }
-  catch (e) { aviso("Não consegui copiar. Escreva na conversa: " + msg, true); }
-  $("#nova-texto").value = "";
-  fecharFolhas();
-  setTimeout(() => { window.open("https://t.me/isisalencastro_bot", "_blank", "noopener"); }, 700);
+  abrirCompromisso(null, vista === "hoje" ? diaSel : hojeISO());
 });
 for (const f of document.querySelectorAll(".folha")) {
   f.addEventListener("click", (ev) => { if (ev.target === f || ev.target.closest("[data-fechar]")) fecharFolhas(); });
