@@ -3,7 +3,7 @@
 // Os dados do banco (Supabase) nao passam por aqui: a ultima lista fica no app.
 const VERSAO = new URL(self.location).searchParams.get("v") || "dev";
 const CACHE = "painel-" + VERSAO;
-const CASCA = ["./", "./index.html", "./style.css?v=" + VERSAO, "./app.js?v=" + VERSAO, "./notas.js?v=" + VERSAO,
+const CASCA = ["./", "./index.html", "./style.css?v=" + VERSAO, "./app.js?v=" + VERSAO, "./notas.js?v=" + VERSAO, "./rotina.js?v=" + VERSAO,
   "./manifest.webmanifest", "./icones/icon-192.png", "./icones/apple-touch-icon.png",
   "./icones/favicon.svg", "./icones/favicon-32.png"];
 
