@@ -5,7 +5,7 @@ const CFG = {
   url: "https://xpkycwxzvhtaylwferiu.supabase.co",
   chave: "sb_publishable_SDGO156OgN9m5HrqcnLeAQ_fcnYctqU",
 };
-const VERSAO = "202610071900";
+const VERSAO = "202610072200";
 const CHAVE_SESSAO = "painel.sessao.v1";
 const DIAS_NAVEGAVEIS = 60;                 // a faixa da semana anda ate 60 dias para tras e para frente
 
@@ -352,6 +352,30 @@ function renderDiaRotina() {
   renderRotina();
 }
 
+/* ---------- exportar para a RING ---------- */
+
+// Baixa um arquivo com a rotina, os compromissos, as tarefas, as notas e o humor deste aparelho, para a RING
+// importar. Nada sai daqui sozinho: é um arquivo no aparelho da Isis.
+function exportarParaRing() {
+  const vivos = (lista) => (lista || []).filter((x) => !x.apagado);
+  const pacote = {
+    formato: "meu-dia",
+    versao: 1,
+    exportado_em: new Date().toISOString(),
+    dados: { blocos: vivos(dados.blocos), compromissos: vivos(dados.compromissos), tarefas: vivos(dados.tarefas) },
+    notas: notas.filter((n) => !n.apagada).map((n) => ({ id: n.id, corpo: n.corpo, fixada: !!n.fixada })),
+    humor: humores(),
+  };
+  const url = URL.createObjectURL(new Blob([JSON.stringify(pacote, null, 2)], { type: "application/json" }));
+  const a = criar("a");
+  a.href = url;
+  a.download = "meu-dia-para-ring-" + hojeISO() + ".json";
+  document.body.appendChild(a);
+  a.click();
+  a.remove();
+  setTimeout(() => URL.revokeObjectURL(url), 1000);
+}
+
 /* ---------- bem-estar ---------- */
 
 function renderBem() {
@@ -491,6 +515,7 @@ $("#form-entrar").addEventListener("submit", async (ev) => {
 });
 
 $("#sair").addEventListener("click", sair);
+$("#exportar-ring").addEventListener("click", exportarParaRing);
 $("#atualizar").addEventListener("click", async () => {
   const b = $("#atualizar");
   b.classList.add("girando");
