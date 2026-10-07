@@ -1,65 +1,76 @@
 # Meu app (painel pessoal)
 
-App instalável (PWA) que mostra o dia da Isis: a rotina do dia com horários (tela Hoje), contagem regressiva
-da ADP, o que ficou para trás e os próximos dias. A lista nasce na página Casa do Notion pessoal e chega ao banco (Supabase, tabela `tasks`)
-pelo agente pessoal; o painel lê de lá com login e grava a marcação de feito.
+App instalável (PWA) da Isis com quatro abas: **Rotina** (o dia em blocos com horário), **Tarefas** (lista por
+dia), **Notas** e **Bem-estar** (frase do dia, humor e as tarefas da semana). Tudo é criado e editado no próprio
+app, com login no Supabase.
 
 - Sem dado sensível: nada de dinheiro, documento ou senha. Sem login o banco não devolve nada.
-- Abre na hora com a última lista guardada no aparelho e funciona sem internet (service worker em `sw.js`);
-  a marcação precisa de internet e avisa quando não salvou.
-- Modo claro e escuro seguem o tema do celular.
-- Página marcada com `noindex`, fora de buscadores.
+- Abre na hora com o que está guardado no aparelho e funciona sem internet (service worker em `sw.js`); a
+  sincronia com o banco acontece quando a internet volta.
+- Modo claro e escuro seguem o tema do celular. Página marcada com `noindex`, fora de buscadores.
 - Para instalar no iPhone: abrir no Safari, Compartilhar, "Adicionar à Tela de Início".
 
 ## Publicar uma versão nova
 
-Trocar a versão em `VERSAO` (no `app.js`) e nos `?v=` do CSS e do JS em `index.html`, todos com o mesmo número.
-O texto "versão" na tela é preenchido pelo JS. O service worker usa a mesma versão para trocar o cache, então o
-celular não mistura tela nova com script velho.
+Trocar a versão em `VERSAO` (no `app.js`) e em todos os `?v=` do `index.html`, com o mesmo número. O service
+worker usa a mesma versão para trocar o cache, então o celular não mistura tela nova com script velho. Arquivo
+JS novo entra também na lista `CASCA` do `sw.js`.
 
-## Sobre o `dados.json`
+## Arquivos
 
-O painel lia um `dados.json` gerado pelo agente pessoal (`/opt/data/profiles/pessoal/scripts/painel_dados.py`).
-Desde a versão com login ele lê do banco, e o arquivo saiu do repositório em 03/10/2026 porque deixava a rotina
-pública. Se ele voltar a aparecer, é esse script publicando: desligar a rotina dele no agente pessoal.
+| Arquivo | O que faz |
+|---|---|
+| `app.js` | casca: sessão, banco, navegação, faixa da semana, Bem-estar, busca, partida |
+| `dados.js` | blocos, compromissos e tarefas: aparelho primeiro e sincronia com a tabela `painel_rotina` |
+| `rotina.js` | tela da Rotina e folhas de bloco e compromisso |
+| `tarefas.js` | tela das Tarefas e folha de editar tarefa |
+| `notas.js` | Notas (tabela própria, `notes`) |
 
-## Estado em 03/10/2026
+A ordem dos `<script>` importa: `app.js` primeiro; a tela abre no `DOMContentLoaded`, quando todos chegaram.
 
-O app entrou em outra versao, com login e itens vindos do banco: ele nao le mais o
-`dados.json` publico, que foi removido do repositorio de proposito. O gerador antigo
-(`scripts/painel_dados.py`) fica guardado para uso manual, e a rotina `painel-atualizar` esta pausada.
+## Banco (Supabase)
 
-## Bloco novo na lista
+Duas tabelas, criadas uma vez pelo SQL Editor:
 
-Cada bloco (Diárias da casa, Estudos etc.) tem posição em `ORDEM` e cor em `CORES`, os dois no `app.js`. Bloco
-que não estiver lá aparece no fim e em cinza; para dar cor, acrescentar o nome em `CORES` com um dos tons
-definidos no `style.css` (azul, rosa, verde, ambar, coral, violeta, laranja).
+- `painel_rotina` (`supabase/painel_rotina.sql`): uma linha por conta com blocos, compromissos e tarefas num
+  JSON. O projeto já tem uma tabela `routines` do app antigo (alencastros), com outro formato: não mexer nela.
+- `notes` (`supabase/notes.sql`).
 
-## Layout desde 05/10/2026
+Sem a tabela, o app avisa "Só neste aparelho" e sobe tudo quando ela aparece.
 
-Azul e branco, fundo liso. Barra inferior com cinco botões: Hoje, Agenda, + (novo compromisso, ou nova nota na aba Notas), Bem-estar e Notas.
-"Ficou para trás" abre pelo sino e pelo menu.
+**Sincronia de `painel_rotina`:** cada item tem `em` (hora da última mudança). Na sincronia, a versão do aparelho e
+a do banco se juntam item a item e vale a mais nova de cada item; marcar tarefa no celular não some porque outro
+aparelho mexeu em outra coisa. Apagar marca `apagado: true` (para o apagar chegar aos outros aparelhos), e o
+item sai de vez depois de 30 dias. Compromisso e tarefa com mais de 60 dias saem sozinhos.
 
-- **Hoje:** frase do dia (toque troca), humor do dia, faixa da semana (toque ou deslize troca o dia; ponto azul é dia
-  com compromisso) e a rotina do dia (ver "Rotina" abaixo). As tarefas do Notion saíram desta tela em 07/10/2026;
-  continuam na Agenda, no sino e na busca.
-- **+:** abre "Novo compromisso" no dia que está na tela.
-- **Humor** fica só no aparelho (`localStorage`), não no banco.
-- **Busca** e o **sino** (pendências atrasadas) usam o que o app já carregou: 7 dias para trás e 30 para frente.
+A tabela `tasks` (lista que vinha da página Casa do Notion pelo agente pessoal) **não é mais lida** desde
+07/10/2026: a Isis escolheu ter a lista própria no app.
 
-## Rotina (desde 07/10/2026)
+## Rotina
 
-Código em `rotina.js`. Dois tipos de item:
+- **Bloco** da rotina fixa: nome, início, fim, dias da semana e **cor escolhida** (10 tons). Lápis da Rotina ou
+  "+" > "Bloco fixo da rotina". Bloco que vira a noite (22:30 a 06:30) conta até a meia-noite no dia dele.
+- **Altura proporcional à duração:** 1 hora = 66px (`PX_POR_MIN` no `rotina.js`), mínimo de 46px para o texto
+  caber. Tempo livre entre blocos aparece como "livre · 1h", limitado a 56px para não empurrar o dia.
+- **Compromisso** ("+" > "Compromisso só neste dia"): nome, dia, horário e cor. Ele manda no horário: o bloco
+  que bate nele encolhe naquele dia (médico das 14h às 16h faz o bloco das 14h às 18h virar 16h às 18h) e, se
+  não sobrarem 15 minutos, sai do dia e aparece em "Fica de fora neste dia". A rotina fixa não muda.
+- Hoje: o bloco da hora fica em destaque ("agora") e os que passaram ficam mais claros; o destaque anda sozinho.
 
-- **Bloco** da rotina fixa: nome, início, fim e dias da semana. Editado pelo lápis da tela Hoje. Bloco que vira a
-  noite (22:30 a 06:30) conta até a meia-noite no dia dele.
-- **Compromisso**: nome, dia, início e fim. Ele manda no horário: o bloco que bate nele encolhe naquele dia (médico
-  das 14h às 16h faz o bloco das 14h às 18h virar 16h às 18h) e, se não sobrar pelo menos 15 minutos, sai do dia e
-  aparece em "Fica de fora neste dia". A rotina fixa não muda.
-- No dia de hoje, o bloco da hora fica em destaque ("agora") e os que passaram ficam apagados; o destaque anda sozinho.
-- Guarda primeiro no aparelho (`painel.rotina.v1:<e-mail>`) e sincroniza com a tabela `painel_rotina` do Supabase (uma
-  linha por conta, JSON inteiro, vale a versão mais nova). **A tabela precisa ser criada uma vez** com
-  `supabase/painel_rotina.sql` (o projeto já tem uma `routines` do app antigo, que não se mexe). Sem ela, o app avisa "Só neste aparelho". Compromisso com mais de 60 dias sai sozinho.
+## Tarefas
+
+- Lista do dia aberto na faixa da semana. Escrever no campo "Nova tarefa" e Enter cria; o campo fica pronto
+  para a próxima. Tocar na bolinha marca; tocar no texto abre a folha (mudar texto ou dia, adiar um dia, apagar
+  com "Desfazer").
+- **Ficou para trás** (só no dia de hoje): o que ficou sem fazer nos últimos 14 dias, com "Para hoje" e "Trazer
+  todas para hoje". O sino do topo conta essas e abre as Tarefas.
+- Na faixa da semana: na Rotina, ponto azul é dia com compromisso; nas Tarefas, azul é dia com tarefa e verde é
+  dia todo feito.
+
+## Bem-estar
+
+Frase do dia (toque troca), humor do dia, humor da semana (só no aparelho, `localStorage`) e barras com as
+tarefas feitas nos últimos sete dias.
 
 ## Notas (desde 05/10/2026)
 
